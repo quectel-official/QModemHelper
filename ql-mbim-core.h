@@ -96,14 +96,11 @@ struct FwUpdaterData
 
 int mbim_reboot_modem(void);
 int mbim_prepare_to_flash(void);
-int __flash_mode_check(void);
 int mbim_get_version(char main_version[128],
 		char carrier_uuid[128],
 		char carrier_version[128],
 		char oem_version[128]);
-int file_get_value(const char *fpath, int base);
-int find_quectel_mbim_device(struct FwUpdaterData *ctx);
-int log_printf(int lvl, const char *log_msg);
+
 void mbim_device_new_ready(GObject *obj,
 			GAsyncResult *res,
 			gpointer user_data);
@@ -126,32 +123,14 @@ void query_subscriber_ready_status_ready(MbimDevice *device,
 void query_device_caps_ready(MbimDevice *device,
                         GAsyncResult *res,
                         gpointer user_data);
-void intel_firmware_update_modem_reboot_set_ready(MbimDevice *dev,
+void mbim_quec_firmware_update_modem_reboot_set_ready(MbimDevice *dev,
                                                          GAsyncResult *res,
 						gpointer user_data);
 
 
 void mbim_exit(struct FwUpdaterData *ctx);
 
-#define error_printf(fmt, arg...)                         \
-    do                                                    \
-    {                                                     \
-        char log_buff[512];                               \
-        snprintf(log_buff, sizeof(log_buff), fmt, ##arg); \
-        log_printf(1, log_buff);                          \
-    } while (0)
 
-#define info_printf(fmt, arg...)                          \
-    do                                                    \
-    {                                                     \
-        char log_buff[512];                               \
-        snprintf(log_buff, sizeof(log_buff), fmt, ##arg); \
-        log_printf(0, log_buff);                          \
-    } while (0)
-
-#endif
-
-#define VALIDATE_UNKNOWN(str) (str ? str : "unknown")
 
 struct uuid_mccmnc_map
 {
@@ -205,3 +184,4 @@ static const struct uuid_mccmnc_map uuid_mccmnc_maps[] = {
     {NULL, NULL},
 };
 
+#endif
