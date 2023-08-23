@@ -20,6 +20,13 @@
 #define dbg_time printf
 bool qdl_debug;
 
+
+static uint32_t le_uint32(uint32_t v32);
+static uint8_t to_hex(uint8_t ch);
+static void print_hex_dump(const char *prefix, const void *buf, size_t len);
+static FILE *create_reset_single_image(void);
+static int check_quec_usb_desc(int fd, struct qdl_device *qdl, int *intf);
+
 uint32_t le_uint32(uint32_t v32)
 {
     const uint32_t is_bigendian = 1;
@@ -36,14 +43,14 @@ uint32_t le_uint32(uint32_t v32)
     return tmp;
 }
 
-uint8_t to_hex(uint8_t ch)
+static uint8_t to_hex(uint8_t ch)
 {
     ch &= 0xf;
     return ch <= 9 ? '0' + ch : 'a' + ch - 10;
 }
 
 
-void print_hex_dump(const char *prefix, const void *buf, size_t len)
+static void print_hex_dump(const char *prefix, const void *buf, size_t len)
 {
     const uint8_t *ptr = buf;
     size_t linelen;

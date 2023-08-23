@@ -38,10 +38,10 @@
 #include <unistd.h>
 #include <stddef.h>
 
-int print_help();
-int parse_flash_fw_parameters(char *arg, char *main_fw, char *oem_fw, char *carrier_fw);
+static int print_help();
+static int parse_flash_fw_parameters(char *arg, char *main_fw, char *oem_fw, char *carrier_fw);
 
-int print_help(int argc,char *argv[])
+static int print_help(int argc,char *argv[])
 {
     printf("\nQuectel modem helper 0.1\n");
         printf("\n=================================\n");
@@ -61,7 +61,7 @@ int print_help(int argc,char *argv[])
 }
 
 
-int parse_flash_fw_parameters(char *arg, char *main_fw, char *oem_fw, char *carrier_fw)
+static int parse_flash_fw_parameters(char *arg, char *main_fw, char *oem_fw, char *carrier_fw)
 {
     char *str, *segment, *saveptr, *saveptr2;
     char *type, *path;
@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
             case 'P':
             {
                 ret = mbim_prepare_to_flash();
-                info_printf("put the modem into firmware download mode %d\n", ret);
+                printf("put the modem into firmware download mode %d\n", ret);
                 return ret;
             }
             break;
@@ -158,51 +158,47 @@ int main(int argc, char *argv[])
                 if ( strlen(main_file_path) && strlen(oem_file_path)  && strlen(carrier_file_path) )
                 {
                     ret = sahara_flash_all(main_file_path, oem_file_path, carrier_file_path);
-                    info_printf("sahara_flash_allr(): %d\n", ret);
+                    printf("sahara_flash_all(): %d\n", ret);
                     return ret;
                 }
 
                 if ( strlen(carrier_file_path) )
                 {
                     ret =  sahara_flash_carrier(carrier_file_path);
-                    info_printf("sahara_flash_carrier(): %d\n", ret);
+                    printf("sahara_flash_carrier(): %d\n", ret);
                     return ret;
                 }
 
                 if ( strlen(main_file_path) )
                 {
                     ret = sahara_flash_carrier(main_file_path);
-                    info_printf("sahara_flash_carrier(): %d\n", ret);
+                    printf("sahara_flash_carrier(): %d\n", ret);
                     return ret;
                 }
 
                 if ( strlen(oem_file_path) )
                 {
                     ret = sahara_flash_carrier(oem_file_path);
-                    info_printf("sahara_flash_carrier(): %d\n", ret);
+                    printf("sahara_flash_carrier(): %d\n", ret);
                     return ret;
                 }
 
                 printf("\nNo file name was supplied\n");
                 break;
-
-            case 'Q':
-                break;
-
             case 'T':
-                info_printf("carrier path: %s\n", optarg);
+                printf("carrier path: %s\n", optarg);
                 ret = sahara_flash_carrier(optarg);
-                info_printf("sahara_flash_carrier(): %d\n", ret);
+                printf("sahara_flash_carrier(): %d\n", ret);
                 break;
 
             case 'R':
                 ret = mbim_reboot_modem();
-                info_printf("mbim_reboot_modem(): %d\n", ret);
+                printf("mbim_reboot_modem(): %d\n", ret);
                 break;
 
             case 'S':
                 ret = sahara_reboot_modem();
-                info_printf("sahara_reboot_modem(): %d\n", ret);
+                printf("sahara_reboot_modem(): %d\n", ret);
                 break ;
 
             case 'H':

@@ -16,17 +16,38 @@
 
 #include "ql-mbim-core.h"
 
+#define VALIDATE_UNKNOWN(str) (str ? str : "unknown")
 
 struct FwUpdaterData s_ctx;
 
-int log_printf(int lvl, const char *log_msg)
+static int find_quectel_mbim_device(struct FwUpdaterData *ctx);
+static int log_printf(int lvl, const char *log_msg);
+static int log_printf(int lvl, const char *log_msg)
+	
 {
     (void)lvl;
     return printf("\t%s", log_msg);
 }
+#define error_printf(fmt, arg...)                         \
+    do                                                    \
+    {                                                     \
+        char log_buff[512];                               \
+        snprintf(log_buff, sizeof(log_buff), fmt, ##arg); \
+        log_printf(1, log_buff);                          \
+    } while (0)
 
+#define info_printf(fmt, arg...)                          \
+    do                                                    \
+    {                                                     \
+        char log_buff[512];                               \
+        snprintf(log_buff, sizeof(log_buff), fmt, ##arg); \
+        log_printf(0, log_buff);                          \
+    } while (0)
 
-int __flash_mode_check(void)
+static int file_get_value(const char *fpath, int base);
+static int flash_mode_check(void);
+
+static int flash_mode_check(void)
 {
     struct dirent *ent = NULL;
     DIR *pDir;
@@ -90,7 +111,7 @@ int __flash_mode_check(void)
 
 
 
-int file_get_value(const char *fpath, int base)
+static int file_get_value(const char *fpath, int base)
 {
     int value = -1;
     FILE *fp = fopen(fpath, "r");
@@ -106,7 +127,7 @@ int file_get_value(const char *fpath, int base)
     return value;
 }
 
-void intel_firmware_update_modem_reboot_set_ready(MbimDevice *dev,
+void mbim_quec_firmware_update_modem_reboot_set_ready(MbimDevice *dev,
                                                   GAsyncResult *res,
                                                   gpointer user_data)
 {
@@ -133,9 +154,7 @@ void query_device_caps_ready(MbimDevice *device,
     g_autoptr(MbimMessage) response = NULL;
     g_autoptr(GError) error = NULL;
     MbimDeviceType device_type;
-    const gchar *device_type_str;
     MbimVoiceClass voice_class;
-    const gchar *voice_class_str;
     MbimCellularClass cellular_class;
     g_autofree gchar *cellular_class_str = NULL;
     MbimSimClass sim_class;
@@ -184,9 +203,8 @@ void query_device_caps_ready(MbimDevice *device,
         return;
     }
 
-    device_type_str = mbim_device_type_get_string(device_type);
+
     cellular_class_str = mbim_cellular_class_build_string_from_mask(cellular_class);
-    voice_class_str = mbim_voice_class_get_string(voice_class);
     sim_class_str = mbim_sim_class_build_string_from_mask(sim_class);
     data_class_str = mbim_data_class_build_string_from_mask(data_class);
     sms_caps_str = mbim_sms_caps_build_string_from_mask(sms_caps);
@@ -491,7 +509,7 @@ void mbim_device_open_ready(MbimDevice *dev,
                             request,
                             10,
                             NULL,
-                            (GAsyncReadyCallback)intel_firmware_update_modem_reboot_set_ready,
+			(GAsyncReadyCallback)mbim_quec_firmware_update_modem_reboot_set_ready,
                             ctx);
     }
 }
@@ -528,7 +546,7 @@ void mbim_device_new_ready(GObject *obj,
 
 
 
-int find_quectel_mbim_device(struct FwUpdaterData *ctx)
+static int find_quectel_mbim_device(struct FwUpdaterData *ctx)
 {
     struct dirent *ent = NULL;
     DIR *pDir;
@@ -616,7 +634,7 @@ int mbim_prepare_to_flash(void)
     struct FwUpdaterData *ctx = &s_ctx;
     g_autoptr(GFile) file = NULL;
 
-    if (__flash_mode_check())
+    if (flash_mode_check())
     {
         info_printf("Already in download mode\n");
         return 1;

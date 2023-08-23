@@ -59,7 +59,6 @@
 #ifndef MIN
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif
-uint32_t le_uint32(uint32_t v32);
 
 struct image_layout
 {
@@ -109,13 +108,6 @@ struct qdl_device
     int out_ep;
     size_t in_maxpktsize;
     size_t out_maxpktsize;
-};
-
-struct flash_fw_info
-{
-  uint32_t file_size;
-  uint32_t file_offset;
-  FILE *file_handle;
 };
 
 struct sahara_pkt
@@ -186,16 +178,14 @@ struct sahara_pkt
     };
 };
 
-uint8_t to_hex(uint8_t ch);
+
 int qdl_write(struct qdl_device *qdl, const void *buf, size_t len);
 int qdl_read(struct qdl_device *qdl, void *buf, size_t len, unsigned int timeout);
 int qdl_open(struct qdl_device *qdl);
 int qdl_close(struct qdl_device *qdl);
-int parse_usb_desc(int fd, struct qdl_device *qdl, int *intf);
-int check_quec_usb_desc(int fd, struct qdl_device *qdl, int *intf);
+
 int sahara_reboot_modem();
 int sahara_flash_carrier(char *file_name);
 int sahara_flash_all(char * main_file_path,char*  oem_file_path,char* carrier_file_path);
-void print_hex_dump(const char *prefix, const void *buf, size_t len);
-FILE *create_reset_single_image(void);
+
 #endif
