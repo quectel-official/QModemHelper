@@ -49,6 +49,9 @@
 #define SAHARA_RAW_BUFFER_SIZE (8 * 1024)
 #define SINGLE_IMAGE_HDR_SIZE (4 * 1024)
 
+#define MAX_NUM_ENDPOINTS 0xff
+#define MAX_NUM_INTERFACES 0xff
+
 #define dbg(fmt, arg...)                                  \
     do                                                    \
     {                                                     \

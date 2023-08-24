@@ -373,9 +373,16 @@ int check_quec_usb_desc(int fd, struct qdl_device *qdl, int *intf)
     ptr += cfg->bLength;
     if (ptr >= end || cfg->bDescriptorType != USB_DT_CONFIG)
         return -EINVAL;
-    dbg_time("C: bNumInterfaces: %d\n", cfg->bNumInterfaces);
 
-    for (k = 0; k < cfg->bNumInterfaces; k++)
+    unsigned numInterfaces = cfg->bNumInterfaces;
+    dbg_time("C: bNumInterfaces: %d\n", numInterfaces);
+
+    if (numInterfaces <= 0 || numInterfaces > MAX_NUM_INTERFACES)
+    {
+        printf("invalid no of interfaces: %d\n", numInterfaces);
+        return -EINVAL;
+    }
+    for (k = 0; k < numInterfaces; k++)
     {
         if (ptr >= end)
         {
@@ -403,7 +410,7 @@ int check_quec_usb_desc(int fd, struct qdl_device *qdl, int *intf)
         out_size = 0;
 
         unsigned noOfEndpoints = ifc->bNumEndpoints;
-        if (noOfEndpoints <= 0)
+        if (noOfEndpoints <= 0 || noOfEndpoints > MAX_NUM_ENDPOINTS)
         {
             printf("invalid no of endpoints: %d\n", noOfEndpoints);
             continue;
