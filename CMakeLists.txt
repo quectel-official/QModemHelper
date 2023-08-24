@@ -1,5 +1,5 @@
-project(qmodemhelper)
 cmake_minimum_required(VERSION 3.22)
+project(qmodemhelper)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 find_program(CTAGS ctags)
