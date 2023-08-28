@@ -120,6 +120,8 @@ int main(int argc, char *argv[])
     memset(oem_file_path , 0 , 1024);
     memset(carrier_file_path , 0 , 1024);
     memset(main_file_path , 0 , 1024);
+
+    openlog ("qmodemhelper", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
     while ( -1 != (opt = getopt_long(argc, argv, "h:", longopts, NULL))) 
     {
         switch (opt)
@@ -214,6 +216,6 @@ int main(int argc, char *argv[])
                 break;
             }
         }
-
+        closelog();
         return 0;
 }

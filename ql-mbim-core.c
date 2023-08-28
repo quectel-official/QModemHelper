@@ -22,11 +22,12 @@ struct FwUpdaterData s_ctx;
 
 static int find_quectel_mbim_device(struct FwUpdaterData *ctx);
 static int log_printf(int lvl, const char *log_msg);
-static int log_printf(int lvl, const char *log_msg)
-	
+static int log_printf(int lvl, const char *log_msg)	
 {
     (void)lvl;
-    return printf("\t%s", log_msg);
+     syslog(lvl,"\t%s", log_msg);
+     return 0;
+     //return printf("\t%s", log_msg);
 }
 #define error_printf(fmt, arg...)                         \
     do                                                    \
