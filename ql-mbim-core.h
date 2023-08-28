@@ -27,7 +27,7 @@
 #include <gio/gio.h>
 #include <libmm-glib.h>
 #include <libmbim-glib.h>
-
+#include <syslog.h>
 
 enum action
 {
