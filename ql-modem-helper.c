@@ -38,6 +38,9 @@
 #include <unistd.h>
 #include <stddef.h>
 
+#define _EXIT_SUCCESS 0
+#define _EXIT_FAILURE -1
+
 static int print_help();
 static int parse_flash_fw_parameters(char *arg, char *main_fw, char *oem_fw, char *carrier_fw);
 
@@ -87,13 +90,14 @@ static int parse_flash_fw_parameters(char *arg, char *main_fw, char *oem_fw, cha
         if (main_fw && strcmp(type, "main") == 0)
         {
             strcpy(main_fw, path);
-            printf("%s : main section found\n",__FUNCTION__);
+            printf("%s : main section found: %s\n",__FUNCTION__, path);
+            
         }
 
         if (carrier_fw && strcmp(type, "carrier") == 0)
         {
             strcpy(carrier_fw, path);
-            printf("%s : carrier section found\n",__FUNCTION__);
+            printf("%s : carrier section found: %s\n",__FUNCTION__, path);
         }
     }
     return 0;
@@ -107,13 +111,15 @@ int main(int argc, char *argv[])
             {"get_fw_info", 0, NULL, 'G'},
             {"prepare_to_flash", 0, NULL, 'P'},
             {"flash_fw", 1, NULL, 'A'},
+            {"flash_mode_check", 0, NULL, 'M'},
             {"reboot", 0, NULL, 'R'},
-            {"sahara-reboot", 0, NULL, 'S'},
+            {"clear_attach_apn", 0, NULL, 'C'},
             {"help", 0, NULL, 'H'},
             {},
     };
     int opt;
     int ret;
+    int exit_value = _EXIT_FAILURE;
     char oem_file_path[1024];
     char carrier_file_path[1024];
     char main_file_path[1024];
@@ -133,13 +139,15 @@ int main(int argc, char *argv[])
                 char carrier_version[128] = {};
                 char oem_version[128] = {};
                 ret = mbim_get_version(main_version, carrier_uuid, carrier_version, oem_version);
-                if (ret)
+                if (ret == 0)
                 {
                     printf("%s:%s\n", "main", main_version);
                     printf("%s:%s\n", "carrier_uuid", carrier_uuid);
                     printf("%s:%s\n", "carrier", carrier_version);
                     if (oem_version[0])
                         printf("%s:%s\n", "oem", oem_version);
+
+                    exit_value = _EXIT_SUCCESS;
                 }
                 break;
             }
@@ -148,67 +156,52 @@ int main(int argc, char *argv[])
             {
                 ret = mbim_prepare_to_flash();
                 printf("put the modem into firmware download mode %d\n", ret);
-                return ret;
+                if (ret == 0)
+                    exit_value = _EXIT_SUCCESS;
             }
             break;
 
             case 'A':
+                /**
+                 * Make sure module in download mode before flashing
+                 */
+                ret = mbim_prepare_to_flash();
+                if (ret != 0)
+                    break;
+
                 parse_flash_fw_parameters(optarg,
                                           main_file_path,
                                           oem_file_path,
                                           carrier_file_path);
-                if ( strlen(main_file_path) && strlen(oem_file_path)  && strlen(carrier_file_path) )
-                {
-                    ret = sahara_flash_all(main_file_path, oem_file_path, carrier_file_path);
-                    printf("sahara_flash_all(): %d\n", ret);
-                    return ret;
-                }
+                ret = sahara_flash_all(main_file_path, oem_file_path, carrier_file_path);
+                printf("sahara_flash_all(): %d\n", ret);
 
-                if ( strlen(carrier_file_path) )
-                {
-                    ret =  sahara_flash_carrier(carrier_file_path);
-                    printf("sahara_flash_carrier(): %d\n", ret);
-                    return ret;
-                }
+                if (ret == 0)
+                    exit_value = _EXIT_SUCCESS;
 
-                if ( strlen(main_file_path) )
-                {
-                    ret = sahara_flash_carrier(main_file_path);
-                    printf("sahara_flash_carrier(): %d\n", ret);
-                    return ret;
-                }
-
-                if ( strlen(oem_file_path) )
-                {
-                    ret = sahara_flash_carrier(oem_file_path);
-                    printf("sahara_flash_carrier(): %d\n", ret);
-                    return ret;
-                }
-
-                printf("\nNo file name was supplied\n");
                 break;
-            case 'T':
-                printf("carrier path: %s\n", optarg);
-                ret = sahara_flash_carrier(optarg);
-                printf("sahara_flash_carrier(): %d\n", ret);
-                break;
-
             case 'R':
                 ret = mbim_reboot_modem();
                 printf("mbim_reboot_modem(): %d\n", ret);
+                if (ret == 0)
+                    exit_value = _EXIT_SUCCESS;
                 break;
 
-            case 'S':
-                ret = sahara_reboot_modem();
-                printf("sahara_reboot_modem(): %d\n", ret);
-                break ;
-
+            case 'M':
+                printf("%s\n", flash_mode_check() ? "true" : "false");
+                exit_value = _EXIT_SUCCESS;
+                break;
+            case 'C':
+                exit_value = _EXIT_SUCCESS;
+                break;
             case 'H':
                 print_help(argc, argv);
+                exit_value = _EXIT_SUCCESS;
                 break;
 
             case 'h':
                 print_help(argc, argv);
+                exit_value = _EXIT_SUCCESS;
                 break;
 
             default:
@@ -217,5 +210,5 @@ int main(int argc, char *argv[])
             }
         }
         closelog();
-        return 0;
+        return exit_value;
 }
