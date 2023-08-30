@@ -690,9 +690,11 @@ int start_image_transfer(struct qdl_device *qdl ,
 }
 
 
-int sahara_flash_all(char *main_file_path,char * oem_file_path,char* carrier_file_path)
+int sahara_flash_all(char *main_file_path, char *oem_file_path, char *carrier_file_path)
 {
     int ret;
+    int i, count;
+
     struct qdl_device qdl;
     struct sahara_pkt *pspkt;
     char buffer[4096];
@@ -723,12 +725,20 @@ int sahara_flash_all(char *main_file_path,char * oem_file_path,char* carrier_fil
 
     sahara_hello_multi(&qdl, pspkt);
 
-    files[0] = main_file_path;
-    files[1] = carrier_file_path;
-    files[2] = oem_file_path;
-    files[3] = NULL;
+    count = 0;
 
-    for( int i = 0; i<4; i++)
+    if (main_file_path[0])
+        files[count++] = main_file_path;
+
+    if (carrier_file_path[0])
+        files[count++] = carrier_file_path;
+
+    if (oem_file_path[0])
+        files[count++] = oem_file_path;
+
+    files[count++] = NULL; // for rest image
+
+    for(i = 0; i < count; i++)
     {
         current_file_name = files[i];
         if (current_file_name)
@@ -784,167 +794,3 @@ int sahara_flash_all(char *main_file_path,char * oem_file_path,char* carrier_fil
     qdl_close(&qdl);
     return 0;
 }
-
-int sahara_flash_carrier(char *file_name)
-{
-    int ret;
-    struct qdl_device qdl;
-    struct sahara_pkt *pspkt;
-    char buffer[4096];
-    char tmp[32];
-    bool done = false;
-    int nBytes = 0;
-    uint32_t cmdCounter = 0;
-    if (file_name == NULL)
-        return -1;
-
-    printf("\nFlashing : %s\n", file_name);
-
-    ret = qdl_open(&qdl);
-    if (ret)
-    {
-        printf("Could not find a  Quectel device ready to flash!\n");
-        return 1;
-    }
-    else
-    {
-        printf("Found a Quectel device ready to flash!\n");
-    }
-
-    while(!done)
-    {
-        nBytes = qdl_read(&qdl, buffer, sizeof(buffer), 1000);
-        printf("Received %d\n", nBytes);
-        if (nBytes < 0)
-        {
-            send_sahara_reset(&qdl);
-            continue;
-        }
-        cmdCounter++;
-        pspkt = (struct sahara_pkt *)buffer;
-        if ((uint32_t)nBytes != pspkt->length)
-        {
-            fprintf(stderr, "Sahara pkt length not matching");
-            return -EINVAL;
-        }
-        switch (pspkt->cmd)
-        {
-            case 1:
-                sahara_hello(&qdl, pspkt);
-                break;
-            case 3:
-                printf("Receved read data id ");
-                print_hex_dump(tmp, buffer, nBytes);
-                start_image_transfer(&qdl , pspkt ,file_name);
-                break;
-            case 4:
-                printf("SAHARA_END_IMAGE_TX_ID");
-                sprintf(tmp, "CMD%x", pspkt->cmd);
-                print_hex_dump(tmp, buffer, nBytes);
-                break;
-            case 6:
-                sahara_done(pspkt);
-                done = true;
-                break;
-            case 8:
-                printf("Received reset response\n");
-                print_hex_dump(tmp, buffer, nBytes);
-                break;
-            case 9:
-                printf("SAHARA_MEMORY_DEBUG_ID \n");
-                break;
-            case QUEC_SAHARA_FW_UPDATE_PROCESS_REPORT_ID:
-                dbg("Writing %d percent %c", le_uint32(pspkt->packet_fw_update_process_report.percent), (le_uint32(pspkt->packet_fw_update_process_report.percent == 100) ? '\n' : '\r'));
-                break;
-            case QUEC_SAHARA_FW_UPDATE_END_ID:
-                if (le_uint32(pspkt->packet_fw_update_end.successful))
-                    dbg("firmware flash error (%d)", le_uint32(pspkt->packet_fw_update_end.successful));
-                else
-                {
-                    dbg("firmware flash successful");
-                    return 0;
-                }
-                break;
-            default:
-                sprintf(tmp, "CMD%x", pspkt->cmd);
-                print_hex_dump(tmp, buffer, nBytes);
-                break;
-        }
-    }
-    return 0;
-}
-
-
-int sahara_reboot_modem()
-{
-    int ret;
-    struct qdl_device qdl;
-    struct sahara_pkt *pspkt;
-    char buffer[4096];
-    char tmp[32];
-    bool done = false;
-    int nBytes = 0;
-    uint32_t cmdCounter = 0;
-        printf("\nReboot modem via Sahara protocol\n");
-    ret = qdl_open(&qdl);
-    if (ret)
-    {
-        return 1;
-    }
-    else
-    {
-        printf("Found a Quectel device ready to flash!\n");
-    }
-
-    while(!done)
-    {
-        nBytes = qdl_read(&qdl, buffer, sizeof(buffer), 1000);
-        printf("Received %d\n", nBytes);
-        if (nBytes < 0)
-        {
-            send_sahara_reset(&qdl);
-            continue;
-        }
-        cmdCounter++;
-        pspkt = (struct sahara_pkt *)buffer;
-        if ((uint32_t)nBytes != pspkt->length)
-        {
-            fprintf(stderr, "Sahara pkt length not matching");
-            return -EINVAL;
-        }
-        printf("======= %d\n",cmdCounter);
-        switch (pspkt->cmd)
-        {
-            case 1:
-                sahara_hello(&qdl, pspkt);
-                break;
-            case 3:
-                printf("Receved read data id");
-                print_hex_dump(tmp, buffer, nBytes);
-                break;
-            case 4:
-                printf("SAHARA_END_IMAGE_TX_ID");
-                sprintf(tmp, "CMD%x", pspkt->cmd);
-                print_hex_dump(tmp, buffer, nBytes);
-                break;
-            case 6:
-                sahara_done(pspkt);
-                done = true;
-                break;
-            case 8:
-                printf("Received reset response\n");
-                print_hex_dump(tmp, buffer, nBytes);
-                break;
-            case 9:
-                printf("SAHARA_MEMORY_DEBUG_ID \n");
-                break;
-            default:
-                sprintf(tmp, "CMD%x", pspkt->cmd);
-                print_hex_dump(tmp, buffer, nBytes);
-                printf("Sending reset cmd\n");
-                break;
-        }
-    }
-    return 0;
-}
-
