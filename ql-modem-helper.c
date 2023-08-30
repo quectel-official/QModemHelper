@@ -162,6 +162,13 @@ int main(int argc, char *argv[])
             break;
 
             case 'A':
+                /**
+                 * Make sure module in download mode before flashing
+                 */
+                ret = mbim_prepare_to_flash();
+                if (ret != 0)
+                    break;
+
                 parse_flash_fw_parameters(optarg,
                                           main_file_path,
                                           oem_file_path,
