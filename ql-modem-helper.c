@@ -38,13 +38,32 @@
 #include <unistd.h>
 #include <stddef.h>
 
-#define _EXIT_SUCCESS 0
-#define _EXIT_FAILURE -1
+#define MAX_FILE_NAME_LEN 1024
 
-static int print_help();
+//Keys for the parameters that modemfwd will call the helper all these need to handled
+// not all the features need to implemented
+const char kGetFirmwareInfo[] = "get_fw_info";
+const char kShillFirmwareRevision[] = "shill_fw_revision";
+const char kPrepareToFlash[] = "prepare_to_flash";
+const char kFlashFirmware[] = "flash_fw";
+const char kFlashModeCheck[] = "flash_mode_check";
+const char kReboot[] = "reboot";
+const char kClearAttachAPN[] = "clear_attach_apn";
+const char kFwVersion[] = "fw_version";
+
+// Keys used for the kFlashFirmware/kFwVersion/kGetFirmwareInfo switches
+const char kFwMain[] = "main";
+const char kFwCarrier[] = "carrier";
+const char kFwOem[] = "oem";
+const char kFwAp[] = "ap";
+const char kFwDev[] = "dev";
+const char kFwCarrierUuid[] = "carrier_uuid";
+const char kUnknownRevision[] = "unknown-revision";
+
+static int print_help(int);
 static int parse_flash_fw_parameters(char *arg, char *main_fw, char *oem_fw, char *carrier_fw);
 
-static int print_help(int argc,char *argv[])
+static int print_help(int argc)
 {
     printf("\nQuectel modem helper 0.1\n");
         printf("\n=================================\n");
@@ -53,16 +72,14 @@ static int print_help(int argc,char *argv[])
             fprintf(stderr, "Too few arguments!\n");
         }
 
-        fprintf(stderr,"%s", argv[0]);
-        fprintf(stderr,"%s\n", "  --get_fw_info");
-        fprintf(stderr,"%s\n", "  --prepare_to_flash");
-        fprintf(stderr,"%s\n", "  --flash_fw");
-        fprintf(stderr,"%s\n", "  --reboot");
-        fprintf(stderr,"%s\n", "  --help");
-
+        fprintf(stderr,"   --%s\n", kGetFirmwareInfo);
+        fprintf(stderr,"   --%s\n", kPrepareToFlash);
+        fprintf(stderr,"   --%s\n", kFlashFirmware);
+	fprintf(stderr,"   --%s\n", kFlashModeCheck);
+        fprintf(stderr,"   --%s\n", kReboot);
+        fprintf(stderr,"   --help\n");
         return 0;
 }
-
 
 static int parse_flash_fw_parameters(char *arg, char *main_fw, char *oem_fw, char *carrier_fw)
 {
@@ -81,134 +98,129 @@ static int parse_flash_fw_parameters(char *arg, char *main_fw, char *oem_fw, cha
         if (type == NULL || path == NULL)
             break;
 
-        if (oem_fw && strcmp(type, "oem") == 0)
+        if (oem_fw && strcmp(type, kFwOem) == 0)
         {
             strcpy(oem_fw, path);
+	    strcat(oem_fw,"/oem.bin");
             printf("%s : oem section found : %s\n",__FUNCTION__, path);
         }
 
-        if (main_fw && strcmp(type, "main") == 0)
+        if (main_fw && strcmp(type, kFwMain) == 0)
         {
             strcpy(main_fw, path);
+	    strcat(main_fw,"/main.bin");
             printf("%s : main section found: %s\n",__FUNCTION__, path);
-            
         }
 
-        if (carrier_fw && strcmp(type, "carrier") == 0)
+        if (carrier_fw && strcmp(type, kFwCarrier) == 0)
         {
             strcpy(carrier_fw, path);
+	    strcat(carrier_fw,"/carrier.bin");
             printf("%s : carrier section found: %s\n",__FUNCTION__, path);
         }
     }
     return 0;
 }
 
+void get_version()
+{
+	int ret;
+	char main_version[128] = {};
+	char carrier_uuid[128] = {};
+	char carrier_version[128] = {};
+	char oem_version[128] = {};
+	ret = mbim_get_version(main_version, carrier_uuid, carrier_version, oem_version);
+	if (ret == 0)
+	{
+		printf("%s:%s\n", kFwMain, main_version);
+		printf("%s:%s\n", kFwCarrierUuid, carrier_uuid);
+		printf("%s:%s\n", kFwCarrier, carrier_version);
+		if (strlen(oem_version)) {
+                        printf("%s:%s\n", kFwOem, oem_version);
+		} else {
+			printf("%s:%s\n", kFwOem, kUnknownRevision);
+		}
+	}
+	closelog();
+}
 
+int flash_firmware(char *arg)
+{
+	int ret;
+	char oem_file_path[MAX_FILE_NAME_LEN];
+	char carrier_file_path[MAX_FILE_NAME_LEN];
+	char main_file_path[MAX_FILE_NAME_LEN];
+	memset(oem_file_path , 0 , MAX_FILE_NAME_LEN);
+	memset(carrier_file_path , 0 , MAX_FILE_NAME_LEN);
+	memset(main_file_path , 0 , MAX_FILE_NAME_LEN);
+
+	ret = mbim_prepare_to_flash();
+	if (ret != 0)
+		return EXIT_FAILURE;
+	parse_flash_fw_parameters(arg,
+				main_file_path,
+				oem_file_path,
+				carrier_file_path);
+	ret = sahara_flash_all(main_file_path, oem_file_path, carrier_file_path);
+	if (ret != 0)
+		return EXIT_FAILURE;
+	closelog();
+	return 0;
+}
 
 int main(int argc, char *argv[])
 {
     struct option longopts[] = {
-            {"get_fw_info", 0, NULL, 'G'},
-            {"prepare_to_flash", 0, NULL, 'P'},
-            {"flash_fw", 1, NULL, 'A'},
-            {"flash_mode_check", 0, NULL, 'M'},
-            {"reboot", 0, NULL, 'R'},
-            {"clear_attach_apn", 0, NULL, 'C'},
+            {kGetFirmwareInfo, 0, NULL, 'G'},
+            {kPrepareToFlash, 0, NULL, 'P'},
+            {kFlashFirmware, 1, NULL, 'A'},
+            {kFlashModeCheck, 0, NULL, 'M'},
+            {kReboot, 0, NULL, 'R'},
             {"help", 0, NULL, 'H'},
             {},
     };
     int opt;
     int ret;
-    int exit_value = _EXIT_FAILURE;
-    char oem_file_path[1024];
-    char carrier_file_path[1024];
-    char main_file_path[1024];
-    memset(oem_file_path , 0 , 1024);
-    memset(carrier_file_path , 0 , 1024);
-    memset(main_file_path , 0 , 1024);
-
+ 
     openlog ("qmodemhelper", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
     while ( -1 != (opt = getopt_long(argc, argv, "h:", longopts, NULL))) 
     {
         switch (opt)
         {
             case 'G':
-            {
-                char main_version[128] = {};
-                char carrier_uuid[128] = {};
-                char carrier_version[128] = {};
-                char oem_version[128] = {};
-                ret = mbim_get_version(main_version, carrier_uuid, carrier_version, oem_version);
-                if (ret == 0)
-                {
-                    printf("%s:%s\n", "main", main_version);
-                    printf("%s:%s\n", "carrier_uuid", carrier_uuid);
-                    printf("%s:%s\n", "carrier", carrier_version);
-                    if (oem_version[0])
-                        printf("%s:%s\n", "oem", oem_version);
-
-                    exit_value = _EXIT_SUCCESS;
-                }
-                break;
-            }
-
+		get_version();
+                return 0;
             case 'P':
-            {
-                ret = mbim_prepare_to_flash();
-                printf("put the modem into firmware download mode %d\n", ret);
-                if (ret == 0)
-                    exit_value = _EXIT_SUCCESS;
-            }
-            break;
-
+		if (mbim_prepare_to_flash()) {
+		       return EXIT_FAILURE;
+		}
+                printf("Swithing the modem into firmware download mode %d\n", ret);
+		return 0;
             case 'A':
-                /**
-                 * Make sure module in download mode before flashing
-                 */
-                ret = mbim_prepare_to_flash();
-                if (ret != 0)
-                    break;
-
-                parse_flash_fw_parameters(optarg,
-                                          main_file_path,
-                                          oem_file_path,
-                                          carrier_file_path);
-                ret = sahara_flash_all(main_file_path, oem_file_path, carrier_file_path);
-                printf("sahara_flash_all(): %d\n", ret);
-
-                if (ret == 0)
-                    exit_value = _EXIT_SUCCESS;
-
-                break;
+		return flash_firmware(optarg);
             case 'R':
-                ret = mbim_reboot_modem();
-                printf("mbim_reboot_modem(): %d\n", ret);
-                if (ret == 0)
-                    exit_value = _EXIT_SUCCESS;
-                break;
-
+                if (mbim_reboot_modem()) {
+			return EXIT_FAILURE;
+		}
+		printf("\nModem is rebooting\n");
+                return 0;
             case 'M':
-                printf("%s\n", flash_mode_check() ? "true" : "false");
-                exit_value = _EXIT_SUCCESS;
-                break;
-            case 'C':
-                exit_value = _EXIT_SUCCESS;
-                break;
+		if (flash_mode_check()) {
+			printf("\nModem is in flashing mode\n");
+		} else {
+			printf("\nModem is in normal operating mode\n");
+		}
+                return 0;
             case 'H':
-                print_help(argc, argv);
-                exit_value = _EXIT_SUCCESS;
-                break;
-
+                print_help(argc);
+                return 0;
             case 'h':
-                print_help(argc, argv);
-                exit_value = _EXIT_SUCCESS;
-                break;
-
+                print_help(argc);
+                return 0;
             default:
-                print_help(argc, argv);
                 break;
             }
         }
         closelog();
-        return exit_value;
+        return EXIT_FAILURE;
 }
