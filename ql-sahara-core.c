@@ -703,7 +703,7 @@ int sahara_flash_all(char *main_file_path,char * oem_file_path,char* carrier_fil
     if (ret)
     {
         printf("Could not find a  Quectel device ready to flash!\n");
-        return 1;
+        return -1;
     }
     else
     {

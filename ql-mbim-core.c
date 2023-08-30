@@ -46,9 +46,9 @@ static int log_printf(int lvl, const char *log_msg)
     } while (0)
 
 static int file_get_value(const char *fpath, int base);
-static int flash_mode_check(void);
+int flash_mode_check(void);
 
-static int flash_mode_check(void)
+int flash_mode_check(void)
 {
     struct dirent *ent = NULL;
     DIR *pDir;
@@ -614,10 +614,10 @@ int mbim_reboot_modem(void)
          * 2. call quectel-modemfwd-helper --reboot
          *
          * In fact, when step1 finished, the module reboot itself automatically.
-         * Return 1 to the caller pretending the call is successful.
+         * Return success value to the caller pretending the call is successful.
          */
         info_printf("Could not find a Quectel modem available for commands!\n");
-        return 1;
+        return 0;
     }
 
     SET_ACTION(ctx, REBOOT);
@@ -626,7 +626,7 @@ int mbim_reboot_modem(void)
     mbim_device_new(g_file_new_for_path(ctx->cdc_wdm), NULL, (GAsyncReadyCallback)mbim_device_new_ready, ctx);
     g_main_loop_run(ctx->mainloop);
     g_main_loop_unref(ctx->mainloop);
-    return 1;
+    return 0;
 }
 
 
@@ -638,13 +638,13 @@ int mbim_prepare_to_flash(void)
     if (flash_mode_check())
     {
         info_printf("Already in download mode\n");
-        return 1;
+        return 0;
     }
 
     if (!find_quectel_mbim_device(ctx))
     {
         info_printf("quectel mbim device not found\n");
-        return 0;
+        return -1;
     }
 
     info_printf("Switching the device into flashing mode\n");
@@ -658,7 +658,7 @@ int mbim_prepare_to_flash(void)
     info_printf("Mbim initialization main loop\n");
     g_main_loop_run(ctx->mainloop);
     g_main_loop_unref(ctx->mainloop);
-    return 1;
+    return 0;
 }
 
 
@@ -677,7 +677,7 @@ int mbim_get_version(char main_version[128],
     if (!find_quectel_mbim_device(ctx))
     {
         info_printf("quectel mbim device not found\n");
-        return 0;
+        return -1;
     }
 
     info_printf("Quectel mbim device found!\n");
@@ -704,19 +704,19 @@ int mbim_get_version(char main_version[128],
     {
 
         info_printf("can not get EM060KGL product firmware info from module\n");
-        return 0;
+        return -1;
     }
 
     if ((p = strrchr(ctx->firmware_info, '_')) == NULL)
     {
         info_printf("%s: wrong format\n", ctx->firmware_info);
-        return 0;
+        return -1;
     }
 
     if (sscanf(p + 1, "%02d.%03d.%02d.%03d.%02d.%03d", &m1, &m2, &o1, &o2, &c1, &c2) != 6)
     {
         info_printf("%s: wrong format\n", ctx->firmware_info);
-        return 0;
+        return -1;
     }
 
     sprintf(main_version, "%02d.%03d", m1, m2);
@@ -738,5 +738,5 @@ int mbim_get_version(char main_version[128],
 
     info_printf("[debug]carrier_uuid:%s\n", carrier_uuid);
 
-    return 1;
+    return 0;
 }

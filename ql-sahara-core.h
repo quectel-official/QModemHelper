@@ -190,5 +190,6 @@ int qdl_close(struct qdl_device *qdl);
 int sahara_reboot_modem();
 int sahara_flash_carrier(char *file_name);
 int sahara_flash_all(char * main_file_path,char*  oem_file_path,char* carrier_file_path);
+int flash_mode_check(void);
 
 #endif
