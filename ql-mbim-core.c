@@ -632,6 +632,8 @@ int mbim_reboot_modem(void)
 
 int mbim_prepare_to_flash(void)
 {
+    int i;
+
     struct FwUpdaterData *ctx = &s_ctx;
     g_autoptr(GFile) file = NULL;
 
@@ -658,7 +660,18 @@ int mbim_prepare_to_flash(void)
     info_printf("Mbim initialization main loop\n");
     g_main_loop_run(ctx->mainloop);
     g_main_loop_unref(ctx->mainloop);
-    return 0;
+
+    for (i = 0; i < 10; i++) // wait 5s
+    {
+        usleep(500000); // 0.5S
+
+        if (flash_mode_check())
+        {
+            return 0;
+        }
+    }
+
+    return -1;
 }
 
 
