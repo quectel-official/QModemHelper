@@ -605,19 +605,9 @@ int mbim_reboot_modem(void)
 {
     struct FwUpdaterData *ctx = &s_ctx;
     g_autoptr(GFile) file = NULL;
-    if (!find_quectel_mbim_device(ctx))
-    {
-        /**
-         * workround
-         * Modemfwd updating firmware steps:
-         * 1. call quectel-modemfwd-helper --flash_fw ...
-         * 2. call quectel-modemfwd-helper --reboot
-         *
-         * In fact, when step1 finished, the module reboot itself automatically.
-         * Return success value to the caller pretending the call is successful.
-         */
+    if (!find_quectel_mbim_device(ctx)) {
         info_printf("Could not find a Quectel modem available for commands!\n");
-        return 0;
+        return EXIT_FAILURE;
     }
 
     SET_ACTION(ctx, REBOOT);
@@ -650,7 +640,6 @@ int mbim_prepare_to_flash(void)
     }
 
     info_printf("Switching the device into flashing mode\n");
-    
     SET_ACTION(ctx, SWITCH_SBL);
     ctx->mainloop = g_main_loop_new(NULL, FALSE);
     file = g_file_new_for_path(ctx->cdc_wdm);

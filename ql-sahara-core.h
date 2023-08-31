@@ -45,7 +45,7 @@
 #define QUEC_SAHARA_FW_UPDATE_PROCESS_REPORT_ID 0x20
 #define QUEC_SAHARA_FW_UPDATE_END_ID  0x21
 
-
+#define QBUFFER_SIZE 4096
 #define SAHARA_RAW_BUFFER_SIZE (8 * 1024)
 #define SINGLE_IMAGE_HDR_SIZE (4 * 1024)
 
@@ -73,7 +73,7 @@ struct image_layout
     uint32_t crc;
 }__attribute__ ((__packed__));;
 
-// 4096
+
 struct single_image_hdr
 {
     char magic[4]; //"Quec"
