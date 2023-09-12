@@ -37,6 +37,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stddef.h>
+#include <gpiod.h>
 
 #define MAX_FILE_NAME_LEN 1024
 
@@ -62,6 +63,37 @@ const char kUnknownRevision[] = "unknown-revision";
 
 static int print_help(int);
 static int parse_flash_fw_parameters(char *arg, char *main_fw, char *oem_fw, char *carrier_fw);
+static int gpio_reboot_modem(int lte_line);
+
+static int gpio_reboot_modem(int lte_line)
+{
+  struct gpiod_chip *chip;
+	struct gpiod_line *line;
+	int req;
+  chip = gpiod_chip_open("/dev/gpiochip0");
+	if (!chip)
+		return EXIT_FAILURE;
+
+
+  line = gpiod_chip_get_line(chip, lte_line);
+	if (!line) {
+		gpiod_chip_close(chip);
+		return EXIT_FAILURE;
+	}
+
+  req = gpiod_line_request_output(line, "lte_modem", 0);
+	if (req) {
+		gpiod_chip_close(chip);
+		return EXIT_FAILURE;
+	}
+
+  gpiod_line_set_value(line, 0);
+  gpiod_line_set_value(line, 1);
+
+  gpiod_line_release(line);
+  gpiod_chip_close(chip);
+  return EXIT_SUCCESS;
+}
 
 static int print_help(int argc)
 {
@@ -181,9 +213,9 @@ int main(int argc, char *argv[])
     };
     int opt;
     int ret;
- 
+
     openlog ("qmodemhelper", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
-    while ( -1 != (opt = getopt_long(argc, argv, "h:", longopts, NULL))) 
+    while ( -1 != (opt = getopt_long(argc, argv, "h:", longopts, NULL)))
     {
         switch (opt)
         {
@@ -199,10 +231,10 @@ int main(int argc, char *argv[])
             case 'A':
 		return flash_firmware(optarg);
             case 'R':
-                if (mbim_reboot_modem()) {
-			return EXIT_FAILURE;
-		}
-		printf("\nModem is rebooting\n");
+                if (gpio_reboot_modem(112)) {
+			               return EXIT_FAILURE;
+		            }
+		            printf("\nModem is rebooting\n");
                 return 0;
             case 'M':
 		if (flash_mode_check()) {
