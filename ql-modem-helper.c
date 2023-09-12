@@ -64,9 +64,9 @@ const char kUnknownRevision[] = "unknown-revision";
 
 static int print_help(int);
 static int parse_flash_fw_parameters(char *arg, char *main_fw, char *oem_fw, char *carrier_fw);
-static int gpio_reboot_modem(int lte_line);
+static int gpio_reboot_modem();
 
-static int gpio_reboot_modem(int lte_line)
+static int gpio_reboot_modem()
 {
   struct gpiod_chip *chip;
 	struct gpiod_line *line;
@@ -77,6 +77,7 @@ static int gpio_reboot_modem(int lte_line)
 		return EXIT_FAILURE;
   }
 
+  printf("Gpio hub open \n");
   line = gpiod_chip_find_line(chip,RESET_LINE);
   //line = gpiod_chip_get_line(chip, lte_line);
 	if (!line) {
@@ -84,6 +85,7 @@ static int gpio_reboot_modem(int lte_line)
 		gpiod_chip_close(chip);
 		return EXIT_FAILURE;
 	}
+  printf("rest line found :%s\n", RESET_LINE );
 
   req = gpiod_line_request_output(line, HELPERID, 0);
 	if (req) {
@@ -92,6 +94,7 @@ static int gpio_reboot_modem(int lte_line)
 		return EXIT_FAILURE;
 	}
 
+  printf("Reset line set for output\n");
   gpiod_line_set_value(line, 0);
   gpiod_line_set_value(line, 1);
 
@@ -236,10 +239,10 @@ int main(int argc, char *argv[])
             case 'A':
 		return flash_firmware(optarg);
             case 'R':
-                if (gpio_reboot_modem(182)) {
+                if (gpio_reboot_modem()) {
 			               return EXIT_FAILURE;
 		            }
-		            printf("\nModem is rebooting\n");
+		            printf("Modem is rebooting\n");
                 return 0;
             case 'M':
 		if (flash_mode_check()) {
