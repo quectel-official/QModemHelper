@@ -96,6 +96,7 @@ static int gpio_reboot_modem()
 
   printf("Reset line set for output\n");
   gpiod_line_set_value(line, 0);
+  sleep(5);
   gpiod_line_set_value(line, 1);
 
   gpiod_line_release(line);
