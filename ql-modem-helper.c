@@ -87,7 +87,7 @@ static int gpio_reboot_modem(int lte_line)
 
   req = gpiod_line_request_output(line, HELPERID, 0);
 	if (req) {
-    printf("\n Can't set the line for output: %d\n", RESET_LINE);
+    printf("\n Can't set the line for output: %s\n", RESET_LINE);
 		gpiod_chip_close(chip);
 		return EXIT_FAILURE;
 	}
