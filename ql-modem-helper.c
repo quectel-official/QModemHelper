@@ -85,7 +85,7 @@ static int gpio_reboot_modem()
 		gpiod_chip_close(chip);
 		return EXIT_FAILURE;
 	}
-  printf("rest line found :%s\n", RESET_LINE );
+  printf("reset line found :%s offset %d\n", RESET_LINE, gpiod_line_offset(line) );
 
   req = gpiod_line_request_output(line, HELPERID, 0);
 	if (req) {
