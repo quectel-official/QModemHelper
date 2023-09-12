@@ -231,7 +231,7 @@ int main(int argc, char *argv[])
             case 'A':
 		return flash_firmware(optarg);
             case 'R':
-                if (gpio_reboot_modem(112)) {
+                if (gpio_reboot_modem(182)) {
 			               return EXIT_FAILURE;
 		            }
 		            printf("\nModem is rebooting\n");
