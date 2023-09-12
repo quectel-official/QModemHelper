@@ -42,6 +42,7 @@
 #define MAX_FILE_NAME_LEN 1024
 #define HELPERID "GPIO_HELPER"
 #define RESET_LINE "LTE_RESET_L"
+#define TRUE_RESET_LINE_OFFSET 182
 //Keys for the parameters that modemfwd will call the helper all these need to handled
 // not all the features need to implemented
 const char kGetFirmwareInfo[] = "get_fw_info";
@@ -78,8 +79,8 @@ static int gpio_reboot_modem()
   }
 
   printf("Gpio hub open \n");
-  line = gpiod_chip_find_line(chip,RESET_LINE);
-  //line = gpiod_chip_get_line(chip, lte_line);
+  //line = gpiod_chip_find_line(chip,RESET_LINE);
+  line = gpiod_chip_get_line(chip, 182);
 	if (!line) {
     printf("\n Can't open the line: %s\n", RESET_LINE);
 		gpiod_chip_close(chip);
