@@ -78,15 +78,12 @@ static int gpio_reboot_modem()
 		return EXIT_FAILURE;
   }
 
-  printf("Gpio hub open \n");
-  //line = gpiod_chip_find_line(chip,RESET_LINE);
-  line = gpiod_chip_get_line(chip, 182);
+  line = gpiod_chip_get_line(chip, TRUE_RESET_LINE_OFFSET);
 	if (!line) {
-    printf("\n Can't open the line: %s\n", RESET_LINE);
+    printf("\n Can't open the line: %d\n", TRUE_RESET_LINE_OFFSET);
 		gpiod_chip_close(chip);
 		return EXIT_FAILURE;
 	}
-  printf("reset line found :%s offset %d\n", RESET_LINE, gpiod_line_offset(line) );
 
   req = gpiod_line_request_output(line, HELPERID, 0);
 	if (req) {
@@ -95,11 +92,8 @@ static int gpio_reboot_modem()
 		return EXIT_FAILURE;
 	}
 
-  printf("Reset line set for output\n");
   gpiod_line_set_value(line, 0);
-  sleep(5);
   gpiod_line_set_value(line, 1);
-
   gpiod_line_release(line);
   gpiod_chip_close(chip);
   return EXIT_SUCCESS;
