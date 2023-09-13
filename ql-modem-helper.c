@@ -37,9 +37,12 @@
 #include <string.h>
 #include <unistd.h>
 #include <stddef.h>
+#include <gpiod.h>
 
 #define MAX_FILE_NAME_LEN 1024
-
+#define HELPERID "GPIO_HELPER"
+#define RESET_LINE "LTE_RESET_L"
+#define TRUE_RESET_LINE_OFFSET 182
 //Keys for the parameters that modemfwd will call the helper all these need to handled
 // not all the features need to implemented
 const char kGetFirmwareInfo[] = "get_fw_info";
@@ -62,6 +65,39 @@ const char kUnknownRevision[] = "unknown-revision";
 
 static int print_help(int);
 static int parse_flash_fw_parameters(char *arg, char *main_fw, char *oem_fw, char *carrier_fw);
+static int gpio_reboot_modem();
+
+static int gpio_reboot_modem()
+{
+  struct gpiod_chip *chip;
+	struct gpiod_line *line;
+	int req;
+  chip = gpiod_chip_open("/dev/gpiochip0");
+	if (!chip) {
+    printf("\n Can't open /dev/gpiochip0");
+		return EXIT_FAILURE;
+  }
+
+  line = gpiod_chip_get_line(chip, TRUE_RESET_LINE_OFFSET);
+	if (!line) {
+    printf("\n Can't open the line: %d\n", TRUE_RESET_LINE_OFFSET);
+		gpiod_chip_close(chip);
+		return EXIT_FAILURE;
+	}
+
+  req = gpiod_line_request_output(line, HELPERID, 0);
+	if (req) {
+    printf("\n Can't set the line for output: %s\n", RESET_LINE);
+		gpiod_chip_close(chip);
+		return EXIT_FAILURE;
+	}
+
+  gpiod_line_set_value(line, 0);
+  gpiod_line_set_value(line, 1);
+  gpiod_line_release(line);
+  gpiod_chip_close(chip);
+  return EXIT_SUCCESS;
+}
 
 static int print_help(int argc)
 {
@@ -181,9 +217,9 @@ int main(int argc, char *argv[])
     };
     int opt;
     int ret;
- 
+
     openlog ("qmodemhelper", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
-    while ( -1 != (opt = getopt_long(argc, argv, "h:", longopts, NULL))) 
+    while ( -1 != (opt = getopt_long(argc, argv, "h:", longopts, NULL)))
     {
         switch (opt)
         {
@@ -199,10 +235,10 @@ int main(int argc, char *argv[])
             case 'A':
 		return flash_firmware(optarg);
             case 'R':
-                if (mbim_reboot_modem()) {
-			return EXIT_FAILURE;
-		}
-		printf("\nModem is rebooting\n");
+                if (gpio_reboot_modem()) {
+			               return EXIT_FAILURE;
+		            }
+		            printf("Modem is rebooting\n");
                 return 0;
             case 'M':
 		if (flash_mode_check()) {
