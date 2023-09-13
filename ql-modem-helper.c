@@ -42,6 +42,7 @@
 #define MAX_FILE_NAME_LEN 1024
 #define HELPERID "GPIO_HELPER"
 #define RESET_LINE "LTE_RESET_L"
+#define GPIO_CHIP_LOCATION "/dev/gpiochip0"
 #define TRUE_RESET_LINE_OFFSET 182
 //Keys for the parameters that modemfwd will call the helper all these need to handled
 // not all the features need to implemented
@@ -72,28 +73,41 @@ static int gpio_reboot_modem()
   struct gpiod_chip *chip;
 	struct gpiod_line *line;
 	int req;
-  chip = gpiod_chip_open("/dev/gpiochip0");
-	if (!chip) {
-    printf("\n Can't open /dev/gpiochip0");
-		return EXIT_FAILURE;
+  chip = gpiod_chip_open(GPIO_CHIP_LOCATION);
+  if (!chip) {
+	  printf("\n Can't open %s", GPIO_CHIP_LOCATION);
+	  return EXIT_FAILURE;
   }
 
   line = gpiod_chip_get_line(chip, TRUE_RESET_LINE_OFFSET);
-	if (!line) {
-    printf("\n Can't open the line: %d\n", TRUE_RESET_LINE_OFFSET);
-		gpiod_chip_close(chip);
-		return EXIT_FAILURE;
-	}
+  if (!line) {
+	  printf("\n Can't open the line: %d\n", TRUE_RESET_LINE_OFFSET);
+	  gpiod_chip_close(chip);
+	  return EXIT_FAILURE;
+  }
 
   req = gpiod_line_request_output(line, HELPERID, 0);
-	if (req) {
-    printf("\n Can't set the line for output: %s\n", RESET_LINE);
-		gpiod_chip_close(chip);
-		return EXIT_FAILURE;
-	}
+  if (req) {
+	  printf("\n Can't set the line for output: %d\n", TRUE_RESET_LINE_OFFSET);
+	  gpiod_chip_close(chip);
+	  return EXIT_FAILURE;
+  }
 
-  gpiod_line_set_value(line, 0);
-  gpiod_line_set_value(line, 1);
+  req = gpiod_line_set_value(line, 0);
+
+  if (req) {
+	  printf("\n Can't set the line %d to low\n", TRUE_RESET_LINE_OFFSET);
+	  gpiod_chip_close(chip);
+	  return EXIT_FAILURE;
+  }
+  
+  req = gpiod_line_set_value(line, 1);
+  if (req) {
+	  printf("\n Can't set the line %d to high\n", TRUE_RESET_LINE_OFFSET);
+	  gpiod_chip_close(chip);
+	  return EXIT_FAILURE;
+  }
+
   gpiod_line_release(line);
   gpiod_chip_close(chip);
   return EXIT_SUCCESS;
