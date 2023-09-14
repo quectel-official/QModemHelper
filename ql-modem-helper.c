@@ -44,6 +44,9 @@
 #define RESET_LINE "LTE_RESET_L"
 #define GPIO_CHIP_LOCATION "/dev/gpiochip0"
 #define TRUE_RESET_LINE_OFFSET 182
+
+const char kPowerOverrideLockDirectoryPath[] = "/run/lock/power_override";
+const char kPowerOverrideLockFileName[] = "qmodemhelper.lock";
 //Keys for the parameters that modemfwd will call the helper all these need to handled
 // not all the features need to implemented
 const char kGetFirmwareInfo[] = "get_fw_info";
@@ -67,6 +70,62 @@ const char kUnknownRevision[] = "unknown-revision";
 static int print_help(int);
 static int parse_flash_fw_parameters(char *arg, char *main_fw, char *oem_fw, char *carrier_fw);
 static int gpio_reboot_modem();
+
+static int power_lock( const char* path, const char* filename);
+static int power_unlock(const char* path, const char* filename);
+
+static int power_lock(const char* path, const char* filename)
+{
+	char* full_file_path = NULL;
+	FILE *lock_file;
+
+	if  (!(path && filename)) {
+		return EXIT_FAILURE;
+	}
+	full_file_path = (char *)malloc(strlen(path)+strlen(filename)+2);
+	memset(full_file_path, 0 , strlen(path)+strlen(filename)+2);
+	strncat(full_file_path,path, strlen(path));
+	strncat(full_file_path,"/",1);
+	strncat(full_file_path,filename, strlen(filename));
+
+
+  // Check if file exists
+  if (access(full_file_path, F_OK) == 0) {
+			printf("Lock file already exists \n");
+    	return EXIT_FAILURE;
+  }
+
+  printf("Creating lock file %s \n", full_file_path);
+	if ((lock_file = fopen(full_file_path,"a")) == NULL) {
+			return EXIT_FAILURE;
+	}
+
+	fprintf(lock_file, "%d", getpid());
+	fclose(lock_file);
+	return EXIT_SUCCESS;
+}
+
+static int power_unlock(const char* path, const char* filename)
+{
+	char* full_file_path = NULL;
+
+	if  (!(path && filename)) {
+		return EXIT_FAILURE;
+	}
+
+	full_file_path = (char *)malloc(strlen(path)+strlen(filename)+2);
+	memset(full_file_path, 0 , strlen(path)+strlen(filename)+2);
+	strncat(full_file_path,path, strlen(path));
+	strncat(full_file_path,"/",1);
+	strncat(full_file_path,filename, strlen(filename));
+
+	if (remove(full_file_path) != 0) {
+		    printf("Unable to remove the lock file\n");
+				return EXIT_FAILURE;
+	}
+  printf("Lockfile removed\n");
+	return EXIT_SUCCESS;
+}
 
 static int gpio_reboot_modem()
 {
@@ -100,7 +159,7 @@ static int gpio_reboot_modem()
 	  gpiod_chip_close(chip);
 	  return EXIT_FAILURE;
   }
-  
+
   req = gpiod_line_set_value(line, 1);
   if (req) {
 	  printf("\n Can't set the line %d to high\n", TRUE_RESET_LINE_OFFSET);
@@ -238,7 +297,7 @@ int main(int argc, char *argv[])
         switch (opt)
         {
             case 'G':
-		get_version();
+						get_version();
                 return 0;
             case 'P':
 		if (mbim_prepare_to_flash()) {
@@ -247,19 +306,30 @@ int main(int argc, char *argv[])
                 printf("Swithing the modem into firmware download mode %d\n", ret);
 		return 0;
             case 'A':
-		return flash_firmware(optarg);
+								if (power_lock(kPowerOverrideLockDirectoryPath, kPowerOverrideLockFileName) !=0) {
+									printf("Cannot aquire file lock\n");
+									return EXIT_FAILURE;
+								}
+							  ret = flash_firmware(optarg);
+								power_unlock(kPowerOverrideLockDirectoryPath, kPowerOverrideLockFileName);
+								return ret;
             case 'R':
+								if (power_lock(kPowerOverrideLockDirectoryPath, kPowerOverrideLockFileName) !=0) {
+									printf("Cannot aquire file lock\n");
+									return EXIT_FAILURE;
+								}
                 if (gpio_reboot_modem()) {
 			               return EXIT_FAILURE;
 		            }
+								power_unlock(kPowerOverrideLockDirectoryPath, kPowerOverrideLockFileName);
 		            printf("Modem is rebooting\n");
                 return 0;
             case 'M':
-		if (flash_mode_check()) {
-			printf("\nModem is in flashing mode\n");
-		} else {
-			printf("\nModem is in normal operating mode\n");
-		}
+								if (flash_mode_check()) {
+									printf("\nModem is in flashing mode\n");
+								} else {
+									printf("\nModem is in normal operating mode\n");
+								}
                 return 0;
             case 'H':
                 print_help(argc);
