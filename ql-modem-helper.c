@@ -43,7 +43,6 @@
 #define HELPERID "GPIO_HELPER"
 #define RESET_LINE "LTE_RESET_L"
 #define GPIO_CHIP_LOCATION "/dev/gpiochip0"
-#define TRUE_RESET_LINE_OFFSET 182
 
 const char kPowerOverrideLockDirectoryPath[] = "/run/lock/power_override";
 const char kPowerOverrideLockFileName[] = "qmodemhelper.lock";
@@ -290,7 +289,7 @@ int main(int argc, char *argv[])
         {"help", 0, NULL, 'H'},
         {},
     };
-	uint reset_line = TRUE_RESET_LINE_OFFSET;
+	uint reset_line = 0;
     int opt;
     int ret;
 	int reset_flag = 0;
@@ -341,7 +340,7 @@ int main(int argc, char *argv[])
             }
         }
 
-		if (reset_flag) {
+		if ((reset_flag) && (reset_line)) {
 			if (power_lock(kPowerOverrideLockDirectoryPath, kPowerOverrideLockFileName) !=0) {
 				printf("Cannot aquire file lock\n");
 				return EXIT_FAILURE;
