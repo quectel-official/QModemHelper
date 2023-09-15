@@ -282,55 +282,55 @@ int flash_firmware(char *arg)
 int main(int argc, char *argv[])
 {
     struct option longopts[] = {
-            {kGetFirmwareInfo, 0, NULL, 'G'},
-            {kPrepareToFlash, 0, NULL, 'P'},
-            {kFlashFirmware, 1, NULL, 'A'},
-            {kFlashModeCheck, 0, NULL, 'M'},
-						{kResetGpioLine, 2, NULL, 'N'},
-            {kReboot, 0, NULL, 'R'},
-            {"help", 0, NULL, 'H'},
-            {},
+        {kGetFirmwareInfo, 0, NULL, 'G'},
+        {kPrepareToFlash, 0, NULL, 'P'},
+        {kFlashFirmware, 1, NULL, 'A'},
+        {kFlashModeCheck, 0, NULL, 'M'},
+		{kResetGpioLine, 2, NULL, 'N'},
+        {kReboot, 0, NULL, 'R'},
+        {"help", 0, NULL, 'H'},
+        {},
     };
-		uint reset_line = TRUE_RESET_LINE_OFFSET;
+	uint reset_line = TRUE_RESET_LINE_OFFSET;
     int opt;
     int ret;
-		int reset_flag = 0;
+	int reset_flag = 0;
     openlog ("qmodemhelper", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
     while ( -1 != (opt = getopt_long(argc, argv, "h:", longopts, NULL)))
     {
         switch (opt)
         {
             case 'G':
-						get_version();
+				get_version();
                 return 0;
             case 'P':
-								if (mbim_prepare_to_flash()) {
-		       				return EXIT_FAILURE;
-								}
+				if (mbim_prepare_to_flash()) {
+		       		return EXIT_FAILURE;
+				}
                 printf("Swithing the modem into firmware download mode %d\n", ret);
-								return 0;
+				return 0;
             case 'A':
-								if (power_lock(kPowerOverrideLockDirectoryPath, kPowerOverrideLockFileName) !=0) {
-									printf("Cannot aquire file lock\n");
-									return EXIT_FAILURE;
-								}
-							  ret = flash_firmware(optarg);
-								power_unlock(kPowerOverrideLockDirectoryPath, kPowerOverrideLockFileName);
-								return ret;
+				if (power_lock(kPowerOverrideLockDirectoryPath, kPowerOverrideLockFileName) !=0) {
+					printf("Cannot aquire file lock\n");
+					return EXIT_FAILURE;
+				}
+				ret = flash_firmware(optarg);
+				power_unlock(kPowerOverrideLockDirectoryPath, kPowerOverrideLockFileName);
+				return ret;
             case 'R':
 							  reset_flag = 1;
                 break;
             case 'M':
-								if (flash_mode_check()) {
-									printf("\nModem is in flashing mode\n");
-								} else {
-									printf("\nModem is in normal operating mode\n");
-								}
+				if (flash_mode_check()) {
+					printf("\nModem is in flashing mode\n");
+				} else {
+					printf("\nModem is in normal operating mode\n");
+				}
                 return 0;
-						case 'N':
-								reset_line = atoi(optarg);
-								printf("Baseline offset %d\n", reset_line);
-						    break;
+			case 'N':
+				reset_line = atoi(optarg);
+				printf("Baseline offset %d\n", reset_line);
+				break;
             case 'H':
                 print_help(argc);
                 return 0;
@@ -342,18 +342,18 @@ int main(int argc, char *argv[])
             }
         }
 
-				if (reset_flag) {
-					if (power_lock(kPowerOverrideLockDirectoryPath, kPowerOverrideLockFileName) !=0) {
-						printf("Cannot aquire file lock\n");
-						return EXIT_FAILURE;
-					}
-					printf("Reseting line: %d\n", reset_line );
-					if (gpio_reboot_modem(reset_line)) {
-							 printf("Failed to reset line: %d\n", reset_line );
-					}
-					power_unlock(kPowerOverrideLockDirectoryPath, kPowerOverrideLockFileName);
-					printf("Modem is rebooting\n");
-				}
+		if (reset_flag) {
+			if (power_lock(kPowerOverrideLockDirectoryPath, kPowerOverrideLockFileName) !=0) {
+				printf("Cannot aquire file lock\n");
+				return EXIT_FAILURE;
+			}
+			printf("Reseting line: %d\n", reset_line );
+			if (gpio_reboot_modem(reset_line)) {
+				printf("Failed to reset line: %d\n", reset_line );
+			}
+			power_unlock(kPowerOverrideLockDirectoryPath, kPowerOverrideLockFileName);
+			printf("Modem is rebooting\n");
+			}
         closelog();
         return EXIT_FAILURE;
 }
