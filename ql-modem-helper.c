@@ -90,13 +90,13 @@ static int power_lock(const char* path, const char* filename)
 	strncat(full_file_path,filename, strlen(filename));
 
 
-  // Check if file exists
-  if (access(full_file_path, F_OK) == 0) {
+    // Check if file exists
+    if (access(full_file_path, F_OK) == 0) {
 			printf("Lock file already exists \n");
     	return EXIT_FAILURE;
-  }
+    }
 
-  printf("Creating lock file %s \n", full_file_path);
+    printf("Creating lock file %s \n", full_file_path);
 	if ((lock_file = fopen(full_file_path,"a")) == NULL) {
 			return EXIT_FAILURE;
 	}
@@ -124,7 +124,7 @@ static int power_unlock(const char* path, const char* filename)
 		    printf("Unable to remove the lock file\n");
 				return EXIT_FAILURE;
 	}
-  printf("Lockfile removed\n");
+    printf("Lockfile removed\n");
 	return EXIT_SUCCESS;
 }
 
@@ -176,20 +176,19 @@ static int gpio_reboot_modem(uint reset_line)
 static int print_help(int argc)
 {
     printf("\nQuectel modem helper 0.1\n");
-        printf("\n=================================\n");
-        if (argc < 2)
-        {
-            fprintf(stderr, "Too few arguments!\n");
-        }
+    printf("\n=================================\n");
+    if (argc < 2) {
+        fprintf(stderr, "Too few arguments!\n");
+    }
 
-        fprintf(stderr,"   --%s\n", kGetFirmwareInfo);
-        fprintf(stderr,"   --%s\n", kPrepareToFlash);
-        fprintf(stderr,"   --%s\n", kFlashFirmware);
-				fprintf(stderr,"   --%s\n", kResetGpioLine);
-	      fprintf(stderr,"   --%s\n", kFlashModeCheck);
-        fprintf(stderr,"   --%s\n", kReboot);
-        fprintf(stderr,"   --help\n");
-        return 0;
+    fprintf(stderr,"   --%s\n", kGetFirmwareInfo);
+    fprintf(stderr,"   --%s\n", kPrepareToFlash);
+    fprintf(stderr,"   --%s\n", kFlashFirmware);
+	fprintf(stderr,"   --%s\n", kResetGpioLine);
+	fprintf(stderr,"   --%s\n", kFlashModeCheck);
+    fprintf(stderr,"   --%s\n", kReboot);
+    fprintf(stderr,"   --help\n");
+    return 0;
 }
 
 static int parse_flash_fw_parameters(char *arg, char *main_fw, char *oem_fw, char *carrier_fw)
