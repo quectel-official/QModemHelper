@@ -73,6 +73,9 @@ struct FwUpdaterData
         {
             gchar firmware_info[128];
             guint firmware_info_len;
+
+            gchar carrier_uuid[128];
+            guint carrier_uuid_len;
         };
 
         struct
@@ -93,6 +96,20 @@ struct FwUpdaterData
     int result_code;
     int result_code_set;
 };
+
+
+typedef struct
+{
+    guint32 offset;
+    guint32 size;
+} offset_size_pair_s;
+
+typedef struct 
+{
+    guint32 fw_type;
+    offset_size_pair_s version;
+    offset_size_pair_s carrier;
+} chrome_fw_info_s;
 
 int mbim_reboot_modem(void);
 int mbim_prepare_to_flash(void);
@@ -132,56 +149,6 @@ void mbim_exit(struct FwUpdaterData *ctx);
 
 
 
-struct uuid_mccmnc_map
-{
-    const char *uuid;
-    const char *mccmnc;
-};
 
-static const struct uuid_mccmnc_map uuid_mccmnc_maps[] = {
-    {"c83d6597-dc91-4d48-a3a7-d86b80123751", "310995"}, /*VZW*/
-    {"c83d6597-dc91-4d48-a3a7-d86b80123751", "311270"}, /*VZW*/
-    {"c83d6597-dc91-4d48-a3a7-d86b80123751", "311480"}, /*VZW*/
-    {"f23f09a8-3416-4165-8654-25a59682af7a", "310030"}, /*AT&T*/
-    {"f23f09a8-3416-4165-8654-25a59682af7a", "310038"}, /*AT&T*/
-    {"f23f09a8-3416-4165-8654-25a59682af7a", "310070"}, /*AT&T*/
-    {"f23f09a8-3416-4165-8654-25a59682af7a", "310090"}, /*AT&T*/
-    {"f23f09a8-3416-4165-8654-25a59682af7a", "310150"}, /*AT&T*/
-    {"f23f09a8-3416-4165-8654-25a59682af7a", "310170"}, /*AT&T*/
-    {"f23f09a8-3416-4165-8654-25a59682af7a", "310280"}, /*AT&T*/
-    {"f23f09a8-3416-4165-8654-25a59682af7a", "310380"}, /*AT&T*/
-    {"f23f09a8-3416-4165-8654-25a59682af7a", "310410"}, /*AT&T*/
-    {"f23f09a8-3416-4165-8654-25a59682af7a", "310560"}, /*AT&T*/
-    {"f23f09a8-3416-4165-8654-25a59682af7a", "310670"}, /*AT&T*/
-    {"f23f09a8-3416-4165-8654-25a59682af7a", "310680"}, /*AT&T*/
-    {"f23f09a8-3416-4165-8654-25a59682af7a", "310950"}, /*AT&T*/
-    {"f23f09a8-3416-4165-8654-25a59682af7a", "310980"}, /*AT&T*/
-    {"f23f09a8-3416-4165-8654-25a59682af7a", "311180"}, /*AT&T*/
-    {"f23f09a8-3416-4165-8654-25a59682af7a", "312670"}, /*AT&T*/
-    {"f23f09a8-3416-4165-8654-25a59682af7a", "313100"}, /*AT&T*/
-    {"f23f09a8-3416-4165-8654-25a59682af7a", "313110"}, /*AT&T*/
-    {"f23f09a8-3416-4165-8654-25a59682af7a", "313120"}, /*AT&T*/
-    {"f23f09a8-3416-4165-8654-25a59682af7a", "313130"}, /*AT&T*/
-    {"f23f09a8-3416-4165-8654-25a59682af7a", "313140"}, /*AT&T*/
-    {"f23f09a8-3416-4165-8654-25a59682af7a", "313790"}, /*AT&T*/
-    {"2951dc13-6c90-4200-b450-666efc95fa01", "310026"}, /*T-Mobile*/
-    {"2951dc13-6c90-4200-b450-666efc95fa01", "310160"}, /*T-Mobile*/
-    {"2951dc13-6c90-4200-b450-666efc95fa01", "310200"}, /*T-Mobile*/
-    {"2951dc13-6c90-4200-b450-666efc95fa01", "310210"}, /*T-Mobile*/
-    {"2951dc13-6c90-4200-b450-666efc95fa01", "310220"}, /*T-Mobile*/
-    {"2951dc13-6c90-4200-b450-666efc95fa01", "310230"}, /*T-Mobile*/
-    {"2951dc13-6c90-4200-b450-666efc95fa01", "310240"}, /*T-Mobile*/
-    {"2951dc13-6c90-4200-b450-666efc95fa01", "310250"}, /*T-Mobile*/
-    {"2951dc13-6c90-4200-b450-666efc95fa01", "310260"}, /*T-Mobile*/
-    {"2951dc13-6c90-4200-b450-666efc95fa01", "310270"}, /*T-Mobile*/
-    {"2951dc13-6c90-4200-b450-666efc95fa01", "310310"}, /*T-Mobile*/
-    {"2951dc13-6c90-4200-b450-666efc95fa01", "310490"}, /*T-Mobile*/
-    {"2951dc13-6c90-4200-b450-666efc95fa01", "310580"}, /*T-Mobile*/
-    {"2951dc13-6c90-4200-b450-666efc95fa01", "310660"}, /*T-Mobile*/
-    {"2951dc13-6c90-4200-b450-666efc95fa01", "310800"}, /*T-Mobile*/
-    {"2951dc13-6c90-4200-b450-666efc95fa01", "311882"}, /*T-Mobile*/
-    {"2951dc13-6c90-4200-b450-666efc95fa01", "312250"}, /*T-Mobile*/
-    {NULL, NULL},
-};
 
 #endif
