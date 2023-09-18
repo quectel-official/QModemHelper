@@ -362,7 +362,7 @@ void mbim_chrome_fw_query_ready(MbimDevice *dev,
 
     const chrome_fw_info_s *fw_info = NULL;
     guint32 fw_info_len = 0;
-    int i = 0;
+    unsigned int i = 0;
 
     UNSET_ACTION(ctx, GET_FW_INFO);
 
@@ -373,7 +373,7 @@ void mbim_chrome_fw_query_ready(MbimDevice *dev,
     }
     else
     {
-        fw_info = mbim_message_command_done_get_raw_information_buffer(response, &fw_info_len);
+        fw_info = (chrome_fw_info_s *)mbim_message_command_done_get_raw_information_buffer(response, &fw_info_len);
 
         // TODO: check buffer boundary
 
@@ -673,7 +673,6 @@ int mbim_get_version(char main_version[128],
 
     char *p;
     int m1, m2, o1, o2, c1, c2;
-    int i;
 
     if (!find_quectel_mbim_device(ctx))
     {

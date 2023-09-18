@@ -100,13 +100,13 @@ struct FwUpdaterData
 
 typedef struct
 {
-    guint32 offset;
-    guint32 size;
+    unsigned int offset;
+    unsigned int size;
 } offset_size_pair_s;
 
 typedef struct 
 {
-    guint32 fw_type;
+    unsigned int fw_type;
     offset_size_pair_s version;
     offset_size_pair_s carrier;
 } chrome_fw_info_s;
