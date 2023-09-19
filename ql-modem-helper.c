@@ -160,6 +160,8 @@ static int gpio_reboot_modem(uint reset_line)
 	  return EXIT_FAILURE;
   }
 
+  sleep(1);
+  
   req = gpiod_line_set_value(line, 1);
   if (req) {
 	  printf("\n Can't set the line %d to high\n", reset_line);
