@@ -161,7 +161,7 @@ static int gpio_reboot_modem(uint reset_line)
   }
 
   sleep(1);
-  
+
   req = gpiod_line_set_value(line, 1);
   if (req) {
 	  printf("\n Can't set the line %d to high\n", reset_line);
@@ -292,7 +292,12 @@ int main(int argc, char *argv[])
     int opt;
     int ret;
 	int reset_flag = 0;
+
     openlog ("qmodemhelper", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
+
+			for (int i=1; i<argc;i++) {
+			 syslog(0,"\t Argument %d : %s",i, argv[i]);
+			}
     while ( -1 != (opt = getopt_long(argc, argv, "h:", longopts, NULL)))
     {
         switch (opt)
