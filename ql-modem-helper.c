@@ -265,6 +265,10 @@ int flash_firmware(char *arg)
 	memset(carrier_file_path , 0 , MAX_FILE_NAME_LEN);
 	memset(main_file_path , 0 , MAX_FILE_NAME_LEN);
 
+	if (mbim_prepare_to_flash()) {
+		  
+			return EXIT_FAILURE;
+	}
 	parse_flash_fw_parameters(arg,
 				main_file_path,
 				oem_file_path,
