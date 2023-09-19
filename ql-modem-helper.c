@@ -160,6 +160,8 @@ static int gpio_reboot_modem(uint reset_line)
 	  return EXIT_FAILURE;
   }
 
+  sleep(1);
+  
   req = gpiod_line_set_value(line, 1);
   if (req) {
 	  printf("\n Can't set the line %d to high\n", reset_line);
@@ -263,9 +265,6 @@ int flash_firmware(char *arg)
 	memset(carrier_file_path , 0 , MAX_FILE_NAME_LEN);
 	memset(main_file_path , 0 , MAX_FILE_NAME_LEN);
 
-	ret = mbim_prepare_to_flash();
-	if (ret != 0)
-		return EXIT_FAILURE;
 	parse_flash_fw_parameters(arg,
 				main_file_path,
 				oem_file_path,

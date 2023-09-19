@@ -1,5 +1,4 @@
-/*
-    Copyright 2023 Quectel Wireless Solutions Co.,Ltd
+/*    Copyright 2023 Quectel Wireless Solutions Co.,Ltd
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -22,7 +21,7 @@ struct FwUpdaterData s_ctx;
 
 static int find_quectel_mbim_device(struct FwUpdaterData *ctx);
 static int log_printf(int lvl, const char *log_msg);
-static int log_printf(int lvl, const char *log_msg)	
+static int log_printf(int lvl, const char *log_msg)
 {
     (void)lvl;
      syslog(lvl,"\t%s", log_msg);
@@ -729,11 +728,11 @@ int mbim_get_version(char main_version[128],
     info_printf("[debug]carrier_version:%s\n", carrier_version);
     info_printf("[debug]oem_version:%s\n", oem_version);
 
-    for (i = 0; uuid_mccmnc_maps[i].mccmnc != NULL; i++)
+    for (i = 0; uuid_version_maps[i].version != NULL; i++)
     {
-        if (ctx->subscriber_id && g_strrstr(ctx->subscriber_id, uuid_mccmnc_maps[i].mccmnc))
+        if (carrier_version && g_strrstr(carrier_version, uuid_version_maps[i].version))
         {
-            strcpy(carrier_uuid, uuid_mccmnc_maps[i].uuid);
+            strcpy(carrier_uuid, uuid_version_maps[i].uuid);
             break;
         }
     }
