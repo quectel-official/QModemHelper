@@ -56,6 +56,20 @@ enum action
     } while (0)
 #define TEST_ACTION(ctx, act) (!!((ctx)->actions & (1 << (act))))
 
+typedef struct
+{
+    unsigned int offset;
+    unsigned int size;
+} offset_size_pair_s;
+
+typedef struct 
+{
+    unsigned int fw_type;
+    offset_size_pair_s version;
+    offset_size_pair_s carrier;
+}  chrome_fw_info_s;
+
+
 struct FwUpdaterData
 {
     GTask *task;
@@ -73,6 +87,8 @@ struct FwUpdaterData
         {
             gchar firmware_info[128];
             guint firmware_info_len;
+            gchar carrier_uuid[128];
+            guint carrier_uuid_len;
         };
 
         struct
@@ -129,16 +145,5 @@ void mbim_quec_firmware_update_modem_reboot_set_ready(MbimDevice *dev,
 
 
 void mbim_exit(struct FwUpdaterData *ctx);
-
-struct uuid_version_map {
-    const char *uuid;
-    const char *version;
-};
-
-static const struct uuid_version_map uuid_version_maps[] = {
-    {"c83d6597-dc91-4d48-a3a7-d86b80123751", "01.100"}, /*Verizon*/
-    {"generic", "01.200"},
-    {"generic", "01.300"}
-};
 
 #endif
