@@ -1,4 +1,5 @@
-/*    Copyright 2023 Quectel Wireless Solutions Co.,Ltd
+/*    
+    Copyright 2023 Quectel Wireless Solutions Co.,Ltd
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -359,11 +360,9 @@ void mbim_chrome_fw_query_ready(MbimDevice *dev,
     g_autoptr(GError) error = NULL;
     struct FwUpdaterData *ctx = (struct FwUpdaterData *)user_data;
 
-    const guint8 *fw_info = NULL;
-    guint8 fw_info_offset;
+    const chrome_fw_info_s *fw_info = NULL;
     guint32 fw_info_len = 0;
-    gchar firmware_info[sizeof(ctx->firmware_info)] = {0};
-    int i = 0;
+    unsigned int i = 0;
 
     UNSET_ACTION(ctx, GET_FW_INFO);
 
@@ -374,21 +373,19 @@ void mbim_chrome_fw_query_ready(MbimDevice *dev,
     }
     else
     {
-        fw_info = mbim_message_command_done_get_raw_information_buffer(response, &fw_info_len);
-
-        fw_info_offset = 4 /*version*/ + 4 /*offset*/ + 4 /*version len*/;
-        fw_info_len -= fw_info_offset;
-
-        memcpy((void *)firmware_info, (void *)(fw_info + fw_info_offset), MIN(sizeof(ctx->firmware_info), fw_info_len));
-
-        /*utf16 ----> utf8*/
-        guint32 size = 2;
-        for (; i * size < fw_info_len; i++)
-            ctx->firmware_info[i] = firmware_info[i * 2];
+        fw_info = (chrome_fw_info_s *)mbim_message_command_done_get_raw_information_buffer(response, &fw_info_len);
+         /*version string: utf16 ----> utf8*/
+         memset(ctx->firmware_info, 0, sizeof(ctx->firmware_info));
+        for (i = 0; i * 2 < fw_info->version.size; i++ )
+            ctx->firmware_info[i] = ((char *)fw_info)[fw_info->version.offset +  i * 2];
+        ctx->firmware_info_len = i;
+        
+        /* carrier_uuid string: utf16 ----> utf8 */
+        memset(ctx->carrier_uuid, 0, sizeof(ctx->carrier_uuid));
+        for (i = 0; i * 2 < fw_info->carrier.size; i++ )
+            ctx->carrier_uuid[i] = ((char *)fw_info)[fw_info->carrier.offset +  i * 2];
+        ctx->carrier_uuid_len = i;
     }
-
-    ctx->firmware_info[i] = '0';
-    ctx->firmware_info_len = fw_info_len / 2;
 
     mbim_exit(ctx);
 }
@@ -673,7 +670,6 @@ int mbim_get_version(char main_version[128],
 
     char *p;
     int m1, m2, o1, o2, c1, c2;
-    int i;
 
     if (!find_quectel_mbim_device(ctx))
     {
@@ -689,7 +685,6 @@ int mbim_get_version(char main_version[128],
     carrier_version[0] = 0;
 
     SET_ACTION(ctx, GET_FW_INFO);
-    SET_ACTION(ctx, QUERY_SUBSCRIBER_READY_STATUS);
 
     ctx->mainloop = g_main_loop_new(NULL, FALSE);
 
@@ -724,19 +719,12 @@ int mbim_get_version(char main_version[128],
     sprintf(carrier_version, "%02d.%03d", c1, c2);
     sprintf(oem_version, "%02d.%03d", o1, o2);
 
+    if (ctx->carrier_uuid_len > 0)
+        strncpy(carrier_uuid, ctx->carrier_uuid, ctx->carrier_uuid_len);
+
     info_printf("[debug]main_version:%s\n", main_version);
     info_printf("[debug]carrier_version:%s\n", carrier_version);
     info_printf("[debug]oem_version:%s\n", oem_version);
-
-    for (i = 0; uuid_version_maps[i].version != NULL; i++)
-    {
-        if (carrier_version && g_strrstr(carrier_version, uuid_version_maps[i].version))
-        {
-            strcpy(carrier_uuid, uuid_version_maps[i].uuid);
-            break;
-        }
-    }
-
     info_printf("[debug]carrier_uuid:%s\n", carrier_uuid);
 
     return 0;
