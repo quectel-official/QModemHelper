@@ -134,6 +134,7 @@ int gpio_reboot_modem(int reset_line)
     fclose(value_fp);
 
     usleep(kToggleWait);
+    sleep(1);
     value_fp = fopen(gpio_line_value,"w+");
     if (!value_fp) {
         printf("Cannot set the gpio line value\n");
