@@ -16,6 +16,7 @@
 
 #include "ql-mbim-core.h"
 #include "ql-sahara-core.h"
+#include "ql-gpio.h"
 #include <errno.h>
 #include <stdint.h>
 #include <linux/usbdevice_fs.h>
@@ -40,9 +41,6 @@
 #include <gpiod.h>
 
 #define MAX_FILE_NAME_LEN 1024
-#define HELPERID "GPIO_HELPER"
-#define RESET_LINE "LTE_RESET_L"
-#define GPIO_CHIP_LOCATION "/dev/gpiochip0"
 
 const char kPowerOverrideLockDirectoryPath[] = "/run/lock/power_override";
 const char kPowerOverrideLockFileName[] = "qmodemhelper.lock";
@@ -69,8 +67,6 @@ const char kUnknownRevision[] = "unknown-revision";
 
 static int print_help(int);
 static int parse_flash_fw_parameters(char *arg, char *main_fw, char *oem_fw, char *carrier_fw);
-static int gpio_reboot_modem();
-
 static int power_lock( const char* path, const char* filename);
 static int power_unlock(const char* path, const char* filename);
 
@@ -127,6 +123,7 @@ static int power_unlock(const char* path, const char* filename)
 	return EXIT_SUCCESS;
 }
 
+/*
 static int gpio_reboot_modem(uint reset_line)
 {
   struct gpiod_chip *chip;
@@ -173,7 +170,7 @@ static int gpio_reboot_modem(uint reset_line)
   gpiod_chip_close(chip);
   return EXIT_SUCCESS;
 }
-
+*/
 static int print_help(int argc)
 {
     printf("\nQuectel modem helper 0.1\n");
