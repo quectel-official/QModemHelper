@@ -28,7 +28,7 @@ const char kGpioExportPath[] = "/sys/class/gpio/export";
 const char kGpioPathPrefix[] = "/sys/class/gpio/gpio";  
 
 const useconds_t kUdevWait   = 100 ;                                                                                                                                                                       
-const useconds_t kToggleWait = 200;                                                                                                                                                                        
+const useconds_t kToggleWait = 2000;                                                                                                                                                                        
                                                                      
 
 int gpio_reboot_modem(int reset_line)
@@ -83,6 +83,7 @@ int gpio_reboot_modem(int reset_line)
     // Check if gpio line is ready for input
     if ( (dp = opendir(absolute_gpio_line_path))) {
         printf("Gpio line ready");
+        gpio_line_ready = 1;
         closedir(dp);
     } else {
         export_fp = fopen(kGpioExportPath,"w");
@@ -103,7 +104,7 @@ int gpio_reboot_modem(int reset_line)
          break;   
         }
         
-        printf("Gpio line ready");
+        printf("Gpio line ready\n");
         gpio_line_ready = 1;
         closedir(dp);
     }
