@@ -32,8 +32,10 @@ add_executable(qmodemhelper
   ql-mbim-core.c
   ql-sahara-core.h
   ql-sahara-core.c
+  ql-gpio.h 
+  ql-gpio.c
   )
 
-target_link_libraries(qmodemhelper udev gpiod ${LIBXML2_LIBRARIES}  ${MM-GLIB_LIBRARIES} ${MBIM-GLIB_LIBRARIES})
+target_link_libraries(qmodemhelper udev ${LIBXML2_LIBRARIES}  ${MM-GLIB_LIBRARIES} ${MBIM-GLIB_LIBRARIES})
 
 install (TARGETS qmodemhelper RUNTIME DESTINATION bin)
