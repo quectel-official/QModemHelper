@@ -28,9 +28,8 @@ const char kGpioExportPath[] = "/sys/class/gpio/export";
 const char kGpioPathPrefix[] = "/sys/class/gpio/gpio";  
 
 const useconds_t kUdevWait   = 100 ;                                                                                                                                                                       
-const useconds_t kToggleWait = 2000;                                                                                                                                                                        
+const useconds_t kToggleWait = 1000;                                                                                                                                                                        
                                                                      
-
 int gpio_reboot_modem(int reset_line)
 {
     DIR *dp;
@@ -54,7 +53,7 @@ int gpio_reboot_modem(int reset_line)
         return EXIT_FAILURE;
     }
 
-    printf("===============\n");
+
     while ((dirp = readdir(dp)) != NULL) {
         memset(local_path,0, MAX_FILE_NAME_LEN );
         strcat(local_path,kGpioSysFsPath);
@@ -73,7 +72,7 @@ int gpio_reboot_modem(int reset_line)
         }
     }
     closedir(dp);
-    printf("===============\n");
+
     snprintf (relative_gpio_line_path , MAX_FILE_NAME_LEN , "%d", reset_line + gpio_base_line );
     reset_line = reset_line + gpio_base_line;
     strcat(absolute_gpio_line_path,kGpioPathPrefix);
@@ -134,7 +133,6 @@ int gpio_reboot_modem(int reset_line)
     fclose(value_fp);
 
     usleep(kToggleWait);
-    sleep(1);
     value_fp = fopen(gpio_line_value,"w+");
     if (!value_fp) {
         printf("Cannot set the gpio line value\n");
