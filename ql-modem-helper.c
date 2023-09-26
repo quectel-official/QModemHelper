@@ -328,9 +328,9 @@ int main(int argc, char *argv[])
                 break;
             case 'M':
 				if (flash_mode_check()) {
-					printf("\nModem is in flashing mode\n");
+					printf("true\n");
 				} else {
-					printf("\nModem is in normal operating mode\n");
+					printf("false\n");
 				}
                 return 0;
 			case 'N':
