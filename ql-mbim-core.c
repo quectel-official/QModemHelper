@@ -356,6 +356,7 @@ void mbim_chrome_fw_query_ready(MbimDevice *dev,
                                 GAsyncResult *res,
                                 gpointer user_data)
 {
+
     g_autoptr(MbimMessage) response = NULL;
     g_autoptr(GError) error = NULL;
     struct FwUpdaterData *ctx = (struct FwUpdaterData *)user_data;
@@ -365,7 +366,6 @@ void mbim_chrome_fw_query_ready(MbimDevice *dev,
     unsigned int i = 0;
 
     UNSET_ACTION(ctx, GET_FW_INFO);
-
     response = mbim_device_command_finish(dev, res, &error);
     if (!response || !mbim_message_response_get_result(response, MBIM_MESSAGE_TYPE_COMMAND_DONE, &error))
     {
@@ -379,14 +379,19 @@ void mbim_chrome_fw_query_ready(MbimDevice *dev,
         for (i = 0; i * 2 < fw_info->version.size; i++ )
             ctx->firmware_info[i] = ((char *)fw_info)[fw_info->version.offset +  i * 2];
         ctx->firmware_info_len = i;
-        
         /* carrier_uuid string: utf16 ----> utf8 */
         memset(ctx->carrier_uuid, 0, sizeof(ctx->carrier_uuid));
-        for (i = 0; i * 2 < fw_info->carrier.size; i++ )
+        ctx->carrier_uuid_len = 0;
+        /* This memory section will not exist in the older versions of firmware */
+        if ( fw_info->carrier.size < 128)
+        {
+          for (i = 0; i * 2 < fw_info->carrier.size; i++ )
+          {
             ctx->carrier_uuid[i] = ((char *)fw_info)[fw_info->carrier.offset +  i * 2];
-        ctx->carrier_uuid_len = i;
+          }
+          ctx->carrier_uuid_len = i;
+        }
     }
-
     mbim_exit(ctx);
 }
 
