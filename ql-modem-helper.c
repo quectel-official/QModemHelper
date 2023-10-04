@@ -38,7 +38,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <stddef.h>
-#include <gpiod.h>
 
 #define MAX_FILE_NAME_LEN 1024
 
@@ -123,54 +122,6 @@ static int power_unlock(const char* path, const char* filename)
 	return EXIT_SUCCESS;
 }
 
-/*
-static int gpio_reboot_modem(uint reset_line)
-{
-  struct gpiod_chip *chip;
-	struct gpiod_line *line;
-	int req;
-  chip = gpiod_chip_open(GPIO_CHIP_LOCATION);
-  if (!chip) {
-	  printf("\n Can't open %s", GPIO_CHIP_LOCATION);
-	  return EXIT_FAILURE;
-  }
-
-  line = gpiod_chip_get_line(chip, reset_line);
-  if (!line) {
-	  printf("\n Can't open the line: %d\n", reset_line);
-	  gpiod_chip_close(chip);
-	  return EXIT_FAILURE;
-  }
-
-  req = gpiod_line_request_output(line, HELPERID, 0);
-  if (req) {
-	  printf("\n Can't set the line for output: %d\n", reset_line);
-	  gpiod_chip_close(chip);
-	  return EXIT_FAILURE;
-  }
-
-  req = gpiod_line_set_value(line, 0);
-
-  if (req) {
-	  printf("\n Can't set the line %d to low\n", reset_line);
-	  gpiod_chip_close(chip);
-	  return EXIT_FAILURE;
-  }
-
-  sleep(1);
-
-  req = gpiod_line_set_value(line, 1);
-  if (req) {
-	  printf("\n Can't set the line %d to high\n", reset_line);
-	  gpiod_chip_close(chip);
-	  return EXIT_FAILURE;
-  }
-
-  gpiod_line_release(line);
-  gpiod_chip_close(chip);
-  return EXIT_SUCCESS;
-}
-*/
 static int print_help(int argc)
 {
     printf("\nQuectel modem helper 0.1\n");
