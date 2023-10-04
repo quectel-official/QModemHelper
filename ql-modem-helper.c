@@ -351,11 +351,15 @@ int main(int argc, char *argv[])
 				return EXIT_FAILURE;
 			}
 			printf("Reseting line: %d\n", reset_line );
-			if (gpio_reboot_modem(reset_line)) {
+			ret = gpio_reboot_modem(reset_line);
+			if (ret) {
 				printf("Failed to reset line: %d\n", reset_line );
 			}
+			else {
+				printf("Modem is rebooting\n");
+			}
 			power_unlock(kPowerOverrideLockDirectoryPath, kPowerOverrideLockFileName);
-			printf("Modem is rebooting\n");
+			return ret;
 			}
         closelog();
         return EXIT_FAILURE;

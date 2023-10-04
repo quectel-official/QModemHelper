@@ -73,8 +73,8 @@ int gpio_reboot_modem(int reset_line)
     }
     closedir(dp);
 
-    snprintf (relative_gpio_line_path , MAX_FILE_NAME_LEN , "%d", reset_line + gpio_base_line );
-    reset_line = reset_line + gpio_base_line;
+    //TODO::Must remove the above logic to find gpio base.
+    snprintf (relative_gpio_line_path , MAX_FILE_NAME_LEN , "%d", reset_line );
     strcat(absolute_gpio_line_path,kGpioPathPrefix);
     strcat(absolute_gpio_line_path,relative_gpio_line_path);
     printf("Reseting gpio line: %s\n", absolute_gpio_line_path  );
