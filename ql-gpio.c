@@ -87,7 +87,7 @@ int gpio_reboot_modem(int reset_line)
     } else {
         export_fp = fopen(kGpioExportPath,"w");
         if (!export_fp) {
-            printf("No write access to gpio export\n");
+            perror("Error opening GPIO line export file");
             return EXIT_FAILURE;
         }
         fprintf(export_fp,"%d", reset_line);
@@ -120,7 +120,7 @@ int gpio_reboot_modem(int reset_line)
     direction_fp = fopen(gpio_line_direction,"w+");
     if(!direction_fp)
     {
-        printf("Cannot set the gpio line direction\n");
+        perror("Error opening GPIO line direction file");
         return EXIT_FAILURE;
     }
     fprintf(direction_fp, "out");    
@@ -131,7 +131,7 @@ int gpio_reboot_modem(int reset_line)
     strcat(gpio_line_value, "/value");
     value_fp = fopen(gpio_line_value,"w+");
     if (!value_fp) {
-        printf("Cannot set the gpio line value\n");
+        perror("Error opening GPIO line value file");
         return EXIT_FAILURE;
     }
     fprintf(value_fp, "0");
@@ -140,7 +140,7 @@ int gpio_reboot_modem(int reset_line)
     sleep(1);
     value_fp = fopen(gpio_line_value,"w+");
     if (!value_fp) {
-        printf("Cannot set the gpio line value\n");
+        perror("Error opening GPIO line value file");
         return EXIT_FAILURE;
     }
     fprintf(value_fp, "1");
