@@ -118,6 +118,11 @@ int gpio_reboot_modem(int reset_line)
     strcat(gpio_line_direction,"/direction");
 
     direction_fp = fopen(gpio_line_direction,"w+");
+    if(!direction_fp)
+    {
+        printf("Cannot set the gpio line direction\n");
+        return EXIT_FAILURE;
+    }
     fprintf(direction_fp, "out");    
     fclose(direction_fp);
 
