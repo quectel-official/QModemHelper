@@ -22,6 +22,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <syslog.h>
+#include <errno.h>
 
 const char kGpioSysFsPath[]  = "/sys/class/gpio";                                                                                                                                                                                    
 const char kGpioExportPath[] = "/sys/class/gpio/export";                                                                                                                                                                            
@@ -49,7 +51,7 @@ int gpio_reboot_modem(int reset_line)
     int line_retries = 100;
 
     if ((dp = opendir(kGpioSysFsPath)) == NULL) {
-        printf("can't open %s", kGpioSysFsPath);
+        syslog(0, "can't open %s", kGpioSysFsPath);
         return EXIT_FAILURE;
     }
 
@@ -60,7 +62,7 @@ int gpio_reboot_modem(int reset_line)
         strcat(local_path,"/");
         strcat(local_path,dirp->d_name);
         if (strstr(local_path , kGpioPathPrefix)) {
-            printf("Found a chip at : %s\n", local_path);
+            syslog(0, "Found a chip at : %s\n", local_path);
             strcat(local_path,"/base");
             base_fp = fopen (local_path, "r");
             if (!base_fp) {
@@ -77,17 +79,17 @@ int gpio_reboot_modem(int reset_line)
     snprintf (relative_gpio_line_path , MAX_FILE_NAME_LEN , "%d", reset_line );
     strcat(absolute_gpio_line_path,kGpioPathPrefix);
     strcat(absolute_gpio_line_path,relative_gpio_line_path);
-    printf("Reseting gpio line: %s\n", absolute_gpio_line_path  );
+    syslog(0, "Reseting gpio line: %s\n", absolute_gpio_line_path  );
 
     // Check if gpio line is ready for input
     if ( (dp = opendir(absolute_gpio_line_path))) {
-        printf("Gpio line ready\n");
+        syslog(0, "Gpio line ready\n");
         gpio_line_ready = 1;
         closedir(dp);
     } else {
         export_fp = fopen(kGpioExportPath,"w");
         if (!export_fp) {
-            perror("Error opening GPIO line export file");
+            syslog(LOG_ERR, "Error opening GPIO line export file: %s", strerror(errno));
             return EXIT_FAILURE;
         }
         fprintf(export_fp,"%d", reset_line);
@@ -103,13 +105,13 @@ int gpio_reboot_modem(int reset_line)
          break;   
         }
         
-        printf("Gpio line ready\n");
+        syslog(0, "Gpio line ready\n");
         gpio_line_ready = 1;
         closedir(dp);
     }
 
     if (!gpio_line_ready) {
-        printf("Can't get the gpio line ready\n");
+        syslog(0, "Can't get the gpio line ready\n");
         return EXIT_FAILURE;
     }
   
@@ -120,7 +122,7 @@ int gpio_reboot_modem(int reset_line)
     direction_fp = fopen(gpio_line_direction,"w+");
     if(!direction_fp)
     {
-        perror("Error opening GPIO line direction file");
+        syslog(LOG_ERR, "Error opening GPIO line direction file: %s", strerror(errno));
         return EXIT_FAILURE;
     }
     fprintf(direction_fp, "out");    
@@ -131,7 +133,7 @@ int gpio_reboot_modem(int reset_line)
     strcat(gpio_line_value, "/value");
     value_fp = fopen(gpio_line_value,"w+");
     if (!value_fp) {
-        perror("Error opening GPIO line value file");
+        syslog(LOG_ERR, "Error opening GPIO line value file: %s", strerror(errno));
         return EXIT_FAILURE;
     }
     fprintf(value_fp, "0");
@@ -140,7 +142,7 @@ int gpio_reboot_modem(int reset_line)
     sleep(1);
     value_fp = fopen(gpio_line_value,"w+");
     if (!value_fp) {
-        perror("Error opening GPIO line value file");
+        syslog(LOG_ERR, "Error opening GPIO line value file: %s", strerror(errno));
         return EXIT_FAILURE;
     }
     fprintf(value_fp, "1");
