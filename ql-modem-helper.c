@@ -86,11 +86,11 @@ static int power_lock(const char* path, const char* filename)
 
     // Check if file exists
     if (access(full_file_path, F_OK) == 0) {
-			printf("Lock file already exists \n");
+			syslog(0, "Lock file already exists \n");
     	return EXIT_FAILURE;
     }
 
-    printf("Creating lock file %s \n", full_file_path);
+    syslog(0, "Creating lock file %s \n", full_file_path);
 	if ((lock_file = fopen(full_file_path,"a")) == NULL) {
 			return EXIT_FAILURE;
 	}
@@ -115,10 +115,10 @@ static int power_unlock(const char* path, const char* filename)
 	strncat(full_file_path,filename, strlen(filename));
 
 	if (remove(full_file_path) != 0) {
-		    printf("Unable to remove the lock file\n");
+		    syslog(0, "Unable to remove the lock file\n");
 				return EXIT_FAILURE;
 	}
-    printf("Lockfile removed\n");
+    syslog(0, "Lockfile removed\n");
 	return EXIT_SUCCESS;
 }
 
@@ -161,21 +161,21 @@ static int parse_flash_fw_parameters(char *arg, char *main_fw, char *oem_fw, cha
         {
             strcpy(oem_fw, path);
 	    strcat(oem_fw,"/oem.bin");
-            printf("%s : oem section found : %s\n",__FUNCTION__, path);
+            syslog(0, "%s : oem section found : %s\n",__FUNCTION__, path);
         }
 
         if (main_fw && strcmp(type, kFwMain) == 0)
         {
             strcpy(main_fw, path);
 	    strcat(main_fw,"/main.bin");
-            printf("%s : main section found: %s\n",__FUNCTION__, path);
+            syslog(0, "%s : main section found: %s\n",__FUNCTION__, path);
         }
 
         if (carrier_fw && strcmp(type, kFwCarrier) == 0)
         {
             strcpy(carrier_fw, path);
 	    strcat(carrier_fw,"/carrier.bin");
-            printf("%s : carrier section found: %s\n",__FUNCTION__, path);
+            syslog(0, "%s : carrier section found: %s\n",__FUNCTION__, path);
         }
     }
     return 0;
@@ -195,7 +195,7 @@ void get_version()
 		printf("%s:%s\n", kFwCarrierUuid, carrier_uuid);
 		printf("%s:%s\n", kFwCarrier, carrier_version);
 		if (strlen(oem_version)) {
-                        printf("%s:%s\n", kFwOem, oem_version);
+                        syslog(0, "%s:%s\n", kFwOem, oem_version);
 		} else {
 			printf("%s:%s\n", kFwOem, kUnknownRevision);
 		}
@@ -261,7 +261,7 @@ int main(int argc, char *argv[])
 				if (mbim_prepare_to_flash()) {
 		       		return EXIT_FAILURE;
 				}
-                printf("Swithing the modem into firmware download mode %d\n", ret);
+                syslog(0, "Swithing the modem into firmware download mode %d\n", ret);
 				return 0;
             case 'A':
 				if (power_lock(kPowerOverrideLockDirectoryPath, kPowerOverrideLockFileName) !=0) {

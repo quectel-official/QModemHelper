@@ -125,7 +125,7 @@ static void print_hex_dump(const char *prefix, const void *buf, size_t len)
 
         line[li] = '\0';
 
-        printf("%s %04zx: %s\n", prefix, i, line);
+        syslog(0, "%s %04zx: %s\n", prefix, i, line);
     }
 }
 
@@ -376,7 +376,7 @@ int check_quec_usb_desc(int fd, struct qdl_device *qdl, int *intf)
 
     if (numInterfaces <= 0 || numInterfaces > MAX_NUM_INTERFACES)
     {
-        printf("invalid no of interfaces: %d\n", numInterfaces);
+        syslog(0, "invalid no of interfaces: %d\n", numInterfaces);
         return -EINVAL;
     }
     for (k = 0; k < numInterfaces; k++)
@@ -391,7 +391,7 @@ int check_quec_usb_desc(int fd, struct qdl_device *qdl, int *intf)
             ifc = ptr;
             if (ifc->bLength < USB_DT_INTERFACE_SIZE)
             {
-                printf("Exiting here ifc->bLengh:%d Interface size: %d\n", ifc->bLength, USB_DT_INTERFACE_SIZE);
+                syslog(0, "Exiting here ifc->bLengh:%d Interface size: %d\n", ifc->bLength, USB_DT_INTERFACE_SIZE);
             }
             ptr += ifc->bLength;
 
@@ -409,14 +409,14 @@ int check_quec_usb_desc(int fd, struct qdl_device *qdl, int *intf)
         unsigned noOfEndpoints = ifc->bNumEndpoints;
         if (noOfEndpoints <= 0 || noOfEndpoints > MAX_NUM_ENDPOINTS)
         {
-            printf("invalid no of endpoints: %d\n", noOfEndpoints);
+            syslog(0, "invalid no of endpoints: %d\n", noOfEndpoints);
             continue;
         }
         for (l = 0; l < noOfEndpoints; l++)
         {
             if (ptr >= end)
             {
-                printf("%s %d end has been reached\n",__FILE__, __LINE__);
+                syslog(0, "%s %d end has been reached\n",__FILE__, __LINE__);
                 return -EINVAL;
             }
 
@@ -425,7 +425,7 @@ int check_quec_usb_desc(int fd, struct qdl_device *qdl, int *intf)
                 ept = ptr;
                 if (ept->bLength < USB_DT_ENDPOINT_SIZE)
                 {
-                    printf("%s %d endpoint length:%d expected size: %d \n",__FILE__, __LINE__, ept->bLength,  USB_DT_ENDPOINT_SIZE);
+                    syslog(0, "%s %d endpoint length:%d expected size: %d \n",__FILE__, __LINE__, ept->bLength,  USB_DT_ENDPOINT_SIZE);
                     return -EINVAL;
                 }
                 ptr += ept->bLength;
@@ -479,7 +479,7 @@ int check_quec_usb_desc(int fd, struct qdl_device *qdl, int *intf)
 
         if( qdl->in_maxpktsize <= 0 || qdl->out_maxpktsize <= 0 )
         {
-            printf("%s %d invalid max packet size received.\n",__FILE__, __LINE__);
+            syslog(0, "%s %d invalid max packet size received.\n",__FILE__, __LINE__);
             return -ENOENT;
         }
         
@@ -647,12 +647,12 @@ int sahara_flash_all(char *main_file_path, char *oem_file_path, char *carrier_fi
 
     if (ret)
     {
-        printf("Could not find a Quectel device ready to flash!\n");
+        syslog(0, "Could not find a Quectel device ready to flash!\n");
         return -1;
     }
     else
     {
-        printf("%s: Found a Quectel device ready to flash!\n",__FUNCTION__);
+        syslog(0, "%s: Found a Quectel device ready to flash!\n",__FUNCTION__);
     }
 
     count = 0;
@@ -688,9 +688,9 @@ int sahara_flash_all(char *main_file_path, char *oem_file_path, char *carrier_fi
     {
         current_file_name = files[i];
         if (current_file_name) {
-            printf("\nFlashing : %s\n", current_file_name);
+            syslog(0, "\nFlashing : %s\n", current_file_name);
         } else {
-            printf("\nFlashing reset image\n");
+            syslog(0, "\nFlashing reset image\n");
         }
 	done = false;
         while(!done) {
