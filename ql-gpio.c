@@ -81,13 +81,13 @@ int gpio_reboot_modem(int reset_line)
 
     // Check if gpio line is ready for input
     if ( (dp = opendir(absolute_gpio_line_path))) {
-        printf("Gpio line ready");
+        printf("Gpio line ready\n");
         gpio_line_ready = 1;
         closedir(dp);
     } else {
         export_fp = fopen(kGpioExportPath,"w");
         if (!export_fp) {
-            printf("No write access to gpio export");
+            printf("No write access to gpio export\n");
             return EXIT_FAILURE;
         }
         fprintf(export_fp,"%d", reset_line);
@@ -132,7 +132,7 @@ int gpio_reboot_modem(int reset_line)
     fprintf(value_fp, "0");
     fclose(value_fp);
 
-    usleep(kToggleWait);
+    sleep(1);
     value_fp = fopen(gpio_line_value,"w+");
     if (!value_fp) {
         printf("Cannot set the gpio line value\n");
