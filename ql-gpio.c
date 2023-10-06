@@ -49,6 +49,7 @@ int gpio_reboot_modem(int reset_line)
     char gpio_line_value[MAX_FILE_NAME_LEN];
     int gpio_line_ready = 0;
     int line_retries = 100;
+    int max_retry = 5;
 
     if ((dp = opendir(kGpioSysFsPath)) == NULL) {
         syslog(0, "can't open %s", kGpioSysFsPath);
@@ -119,14 +120,22 @@ int gpio_reboot_modem(int reset_line)
     strcat(gpio_line_direction,absolute_gpio_line_path);
     strcat(gpio_line_direction,"/direction");
 
-    direction_fp = fopen(gpio_line_direction,"w+");
-    if(!direction_fp)
-    {
-        syslog(LOG_ERR, "Error opening GPIO line direction file: %s", strerror(errno));
-        return EXIT_FAILURE;
+    while(max_retry > 0){
+        direction_fp = fopen(gpio_line_direction,"w+");
+        if(direction_fp)
+            break;
+        syslog(LOG_ERR, "Error opening GPIO line direction file: %s, try after 1 second.", strerror(errno));
+        max_retry--;
+        sleep(1);
     }
-    fprintf(direction_fp, "out");    
-    fclose(direction_fp);
+
+    if(!direction_fp) {
+        syslog(LOG_ERR, "Failed to open GPIO line direction file");
+        return EXIT_FAILURE;
+    } else {
+        fprintf(direction_fp, "out");
+        fclose(direction_fp);
+    }
 
     // Gpio line direction is set to out now let's flip it
     strcat(gpio_line_value, absolute_gpio_line_path);
