@@ -195,7 +195,7 @@ void get_version()
 		printf("%s:%s\n", kFwCarrierUuid, carrier_uuid);
 		printf("%s:%s\n", kFwCarrier, carrier_version);
 		if (strlen(oem_version)) {
-                        syslog(0, "%s:%s\n", kFwOem, oem_version);
+                        printf("%s:%s\n", kFwOem, oem_version);
 		} else {
 			printf("%s:%s\n", kFwOem, kUnknownRevision);
 		}
