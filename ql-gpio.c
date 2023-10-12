@@ -124,11 +124,11 @@ int gpio_reboot_modem(int reset_line)
         syslog(0, "Can't get the gpio line ready\n");
         return EXIT_FAILURE;
     }
-  
+    sleep(1);
     // Seems that line is ready let's set it to direction out
     strcat(gpio_line_direction,absolute_gpio_line_path);
     strcat(gpio_line_direction,"/direction");
-
+    
     while(max_retry > 0){
         direction_fp = fopen(gpio_line_direction,"w+");
         if(direction_fp)
