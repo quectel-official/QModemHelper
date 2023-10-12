@@ -41,7 +41,6 @@ int gpio_reboot_modem(int reset_line)
     FILE* value_fp;
     struct dirent *dirp;
     int gpio_base_line = 0;
-    int ret;
     char local_path[MAX_FILE_NAME_LEN];
     char relative_gpio_line_path[MAX_FILE_NAME_LEN];
     char absolute_gpio_line_path[MAX_FILE_NAME_LEN];
@@ -50,6 +49,7 @@ int gpio_reboot_modem(int reset_line)
     int gpio_line_ready = 0;
     int line_retries = 100;
     int max_retry = 5;
+    int ret;
 
     if ((dp = opendir(kGpioSysFsPath)) == NULL) {
         syslog(0, "can't open %s", kGpioSysFsPath);
@@ -70,6 +70,10 @@ int gpio_reboot_modem(int reset_line)
                 continue;
             }
             ret = fscanf(base_fp, "%d", &gpio_base_line);
+            if (!ret) {
+              syslog(0, "Cannot obtain the baseline address for the gpio chip");
+              return EXIT_FAILURE;
+            }
             fclose(base_fp);
             break;
         }
@@ -80,8 +84,11 @@ int gpio_reboot_modem(int reset_line)
     snprintf (relative_gpio_line_path , MAX_FILE_NAME_LEN , "%d", reset_line );
     strcat(absolute_gpio_line_path,kGpioPathPrefix);
     strcat(absolute_gpio_line_path,relative_gpio_line_path);
-    syslog(0, "Reseting gpio line: %s\n", absolute_gpio_line_path  );
+    syslog(0, "Exporting gpio line: %s\n", absolute_gpio_line_path  );
 
+    // TODO:: This is for testing to delay the attempt of setting the direction of
+    // the GPIO line before udev sets the right permissions
+    sleep(5);
     // Check if gpio line is ready for input
     if ( (dp = opendir(absolute_gpio_line_path))) {
         syslog(0, "Gpio line ready\n");
@@ -97,6 +104,8 @@ int gpio_reboot_modem(int reset_line)
         fclose(export_fp);
     }
     usleep(kUdevWait);
+    // TODO: long sleep to give udev time to setup the permissions
+    sleep(5);
     while(!gpio_line_ready) {
         if (!(line_retries--)) {
             break;

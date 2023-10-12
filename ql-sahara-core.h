@@ -38,6 +38,7 @@
 #include <stddef.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <syslog.h>
 
 #define SWITCHED_TO_EDL 1
 #define SWITCHED_TO_SBL 0
