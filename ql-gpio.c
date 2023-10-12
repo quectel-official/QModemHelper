@@ -29,7 +29,7 @@ const char kGpioSysFsPath[]  = "/sys/class/gpio";
 const char kGpioExportPath[] = "/sys/class/gpio/export";                                                                                                                                                                            
 const char kGpioPathPrefix[] = "/sys/class/gpio/gpio";  
 
-const useconds_t kUdevWait   = 100 ;                                                                                                                                                                       
+const useconds_t kUdevWait   = 500 ;                                                                                                                                                                       
 const useconds_t kToggleWait = 1000;                                                                                                                                                                        
                                                                      
 int gpio_reboot_modem(int reset_line)
@@ -88,7 +88,7 @@ int gpio_reboot_modem(int reset_line)
 
     // TODO:: This is for testing to delay the attempt of setting the direction of
     // the GPIO line before udev sets the right permissions
-    sleep(5);
+    usleep(kUdevWait);
     // Check if gpio line is ready for input
     if ( (dp = opendir(absolute_gpio_line_path))) {
         syslog(0, "Gpio line ready\n");
@@ -103,9 +103,9 @@ int gpio_reboot_modem(int reset_line)
         fprintf(export_fp,"%d", reset_line);
         fclose(export_fp);
     }
-    usleep(kUdevWait);
+
     // TODO: long sleep to give udev time to setup the permissions
-    sleep(5);
+    usleep(kUdevWait);
     while(!gpio_line_ready) {
         if (!(line_retries--)) {
             break;
