@@ -83,15 +83,8 @@ static int power_lock(const char* path, const char* filename)
 	strncat(full_file_path,"/",1);
 	strncat(full_file_path,filename, strlen(filename));
 
-
-    // Check if file exists
-    if (access(full_file_path, F_OK) == 0) {
-			syslog(0, "Lock file already exists \n");
-    	return EXIT_FAILURE;
-    }
-
-    syslog(0, "Creating lock file %s \n", full_file_path);
-	if ((lock_file = fopen(full_file_path,"a")) == NULL) {
+  syslog(0, "Creating lock file %s \n", full_file_path);
+	if ((lock_file = fopen(full_file_path,"w")) == NULL) {
 			return EXIT_FAILURE;
 	}
 
