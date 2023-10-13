@@ -115,7 +115,7 @@ int gpio_reboot_modem(int reset_line)
          break;   
         }
         
-        syslog(0, "Gpio line ready\n");
+        syslog(0, "Gpio line is getting ready\n");
         gpio_line_ready = 1;
         closedir(dp);
     }
@@ -124,18 +124,19 @@ int gpio_reboot_modem(int reset_line)
         syslog(0, "Can't get the gpio line ready\n");
         return EXIT_FAILURE;
     }
-    sleep(1);
+    sleep(2);
     // Seems that line is ready let's set it to direction out
     strcat(gpio_line_direction,absolute_gpio_line_path);
     strcat(gpio_line_direction,"/direction");
     
     while(max_retry > 0){
+        sleep(1);
         direction_fp = fopen(gpio_line_direction,"w+");
         if(direction_fp)
             break;
         syslog(LOG_ERR, "Error opening GPIO line direction file: %s, try after 1 second.", strerror(errno));
         max_retry--;
-        sleep(1);
+        
     }
 
     if(!direction_fp) {
