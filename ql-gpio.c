@@ -41,11 +41,11 @@ int gpio_reboot_modem(int reset_line)
     FILE* value_fp;
     struct dirent *dirp;
     int gpio_base_line = 0;
-    char local_path[MAX_FILE_NAME_LEN];
-    char relative_gpio_line_path[MAX_FILE_NAME_LEN];
-    char absolute_gpio_line_path[MAX_FILE_NAME_LEN];
-    char gpio_line_direction[MAX_FILE_NAME_LEN];
-    char gpio_line_value[MAX_FILE_NAME_LEN];
+    char local_path[MAX_FILE_NAME_LEN]={0};
+    char relative_gpio_line_path[MAX_FILE_NAME_LEN]={0};
+    char absolute_gpio_line_path[MAX_FILE_NAME_LEN]={0};
+    char gpio_line_direction[MAX_FILE_NAME_LEN]={0};
+    char gpio_line_value[MAX_FILE_NAME_LEN]={0};
     int gpio_line_ready = 0;
     int line_retries = 100;
     int max_retry = 5;
@@ -72,6 +72,8 @@ int gpio_reboot_modem(int reset_line)
             ret = fscanf(base_fp, "%d", &gpio_base_line);
             if (!ret) {
               syslog(0, "Cannot obtain the baseline address for the gpio chip");
+              fclose(base_fp);
+              closedir(dp);
               return EXIT_FAILURE;
             }
             fclose(base_fp);
