@@ -215,7 +215,7 @@ int flash_firmware(char *arg)
 
   if (qdl_mode_check() ==  SWITCHED_TO_EDL) {
     // Modem is in qdl mode. sahara_flash_all will handle it.
-    printf("The device is switched to EDL mode. \n");
+    syslog(0, "The device is switched to EDL mode. \n");
     ret = qdl_flash_all(main_file_path, oem_file_path, carrier_file_path);
     if (ret) {
       return EXIT_FAILURE;
