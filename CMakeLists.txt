@@ -34,6 +34,10 @@ add_executable(qmodemhelper
   ql-sahara-core.c
   ql-gpio.h 
   ql-gpio.c
+  ql-qdl-firehose.c
+  ql-qdl-firehose.h
+  ql-qdl-sahara.c
+  ql-qdl-sahara.h
   )
 
 target_link_libraries(qmodemhelper udev ${LIBXML2_LIBRARIES}  ${MM-GLIB_LIBRARIES} ${MBIM-GLIB_LIBRARIES})

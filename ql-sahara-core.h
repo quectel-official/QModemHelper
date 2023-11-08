@@ -42,11 +42,13 @@
 
 #define SWITCHED_TO_EDL 1
 #define SWITCHED_TO_SBL 0
+#define NORMAL_OPERATION 2
 
 #define QUEC_SAHARA_FW_UPDATE_PROCESS_REPORT_ID 0x20
 #define QUEC_SAHARA_FW_UPDATE_END_ID  0x21
 
 #define QBUFFER_SIZE 4096
+#define PATH_LENGTH 512
 #define SAHARA_RAW_BUFFER_SIZE (8 * 1024)
 #define SINGLE_IMAGE_HDR_SIZE (4 * 1024)
 
@@ -181,12 +183,16 @@ struct sahara_pkt
         } packet_fw_update_process_report;
     };
 };
-
-
+uint32_t le_uint32(uint32_t v32);
+uint8_t to_hex(uint8_t ch);
+void print_hex_dump(const char *prefix, const void *buf, size_t len);
+int qdl_mode_check();
 int qdl_write(struct qdl_device *qdl, const void *buf, size_t len);
 int qdl_read(struct qdl_device *qdl, void *buf, size_t len, unsigned int timeout);
 int qdl_open(struct qdl_device *qdl);
 int qdl_close(struct qdl_device *qdl);
+
+int sahara_rx_data(struct qdl_device *qdl, void *rx_buffer, size_t bytes_to_read);
 
 int sahara_reboot_modem();
 int sahara_flash_carrier(char *file_name);

@@ -17,6 +17,7 @@
 #include "ql-mbim-core.h"
 #include "ql-sahara-core.h"
 #include "ql-gpio.h"
+#include "ql-qdl-sahara.h"
 #include <errno.h>
 #include <stdint.h>
 #include <linux/usbdevice_fs.h>
@@ -206,14 +207,26 @@ int flash_firmware(char *arg)
 	memset(carrier_file_path , 0 , MAX_FILE_NAME_LEN);
 	memset(main_file_path , 0 , MAX_FILE_NAME_LEN);
 
+  parse_flash_fw_parameters(arg,
+                            main_file_path,
+                            oem_file_path,
+                            carrier_file_path);
+
+
+  if (qdl_mode_check() ==  SWITCHED_TO_EDL) {
+    // Modem is in qdl mode. sahara_flash_all will handle it.
+    printf("The device is switched to EDL mode. \n");
+    ret = qdl_flash_all(main_file_path, oem_file_path, carrier_file_path);
+    if (ret) {
+      return EXIT_FAILURE;
+    }
+    closelog();
+    return 0;
+  }
+
 	if (mbim_prepare_to_flash()) {
-		  
-			return EXIT_FAILURE;
+    return EXIT_FAILURE;
 	}
-	parse_flash_fw_parameters(arg,
-				main_file_path,
-				oem_file_path,
-				carrier_file_path);
 	ret = sahara_flash_all(main_file_path, oem_file_path, carrier_file_path);
 	if (ret != 0)
 		return EXIT_FAILURE;
@@ -228,7 +241,7 @@ int main(int argc, char *argv[])
         {kPrepareToFlash, 0, NULL, 'P'},
         {kFlashFirmware, 1, NULL, 'A'},
         {kFlashModeCheck, 0, NULL, 'M'},
-		{kResetGpioLine, 2, NULL, 'N'},
+		    {kResetGpioLine, 2, NULL, 'N'},
         {kReboot, 0, NULL, 'R'},
         {"help", 0, NULL, 'H'},
         {},
