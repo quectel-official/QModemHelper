@@ -21,9 +21,6 @@
 bool qdl_debug;
 
 
-static uint32_t le_uint32(uint32_t v32);
-static uint8_t to_hex(uint8_t ch);
-static void print_hex_dump(const char *prefix, const void *buf, size_t len);
 static FILE *create_reset_single_image(void);
 static int check_quec_usb_desc(int fd, struct qdl_device *qdl, int *intf);
 
@@ -80,14 +77,14 @@ uint32_t le_uint32(uint32_t v32)
     return tmp;
 }
 
-static uint8_t to_hex(uint8_t ch)
+uint8_t to_hex(uint8_t ch)
 {
     ch &= 0xf;
     return ch <= 9 ? '0' + ch : 'a' + ch - 10;
 }
 
 
-static void print_hex_dump(const char *prefix, const void *buf, size_t len)
+void print_hex_dump(const char *prefix, const void *buf, size_t len)
 {
     const uint8_t *ptr = buf;
     size_t linelen;
@@ -126,6 +123,8 @@ static void print_hex_dump(const char *prefix, const void *buf, size_t len)
         line[li] = '\0';
 
         syslog(0, "%s %04zx: %s\n", prefix, i, line);
+        printf("%s %04zx: %s\n", prefix, i, line);
+
     }
 }
 
@@ -169,6 +168,98 @@ EXIT:
     return fp;
 }
 
+
+int interogate_usb_desc(int fd)
+{
+  const struct usb_device_descriptor *dev;
+  ssize_t nbytes;
+  void *baseline;
+
+  char desc[1024];
+
+  nbytes = read(fd, desc, sizeof(desc));
+  if (nbytes < 0) {
+    return EINVAL;
+  }
+
+  baseline = (void*)desc;
+  dev = baseline;
+
+  printf("Vendor 0x%x Product 0x%x\n", dev->idVendor, dev->idProduct);
+  /* Consider only devices with vid 0x2c7c (Quectel) or 0x05c6 (Qualcom) */
+  if ((dev->idVendor != 0x2c7c) && (dev->idVendor != 0x05c6)) {
+    return EINVAL;
+  }
+ 
+  if (dev->idProduct == 0x9008) {
+    return SWITCHED_TO_EDL;
+  }
+
+
+  return NORMAL_OPERATION;
+}
+
+
+
+int qdl_mode_check()
+{
+  struct udev *udev;
+  struct udev_monitor *mon;
+  struct udev_enumerate *enumerate;
+
+  struct udev_list_entry *devices;
+  struct udev_list_entry *dev_list_entry;
+
+  struct udev_device *dev;
+  const char *dev_node;
+
+  const char *path;
+  int ret;
+  int fd;
+
+  udev = udev_new();
+  if (!udev) {
+    err(1, "failed to initialize udev");
+  }
+
+  mon = udev_monitor_new_from_netlink(udev, "udev");
+  udev_monitor_filter_add_match_subsystem_devtype(mon, "usb", NULL);
+  udev_monitor_enable_receiving(mon);
+  enumerate = udev_enumerate_new(udev);
+  udev_enumerate_add_match_subsystem(enumerate, "usb");
+  udev_enumerate_scan_devices(enumerate);
+  devices = udev_enumerate_get_list_entry(enumerate);
+  udev_list_entry_foreach(dev_list_entry, devices)
+    {
+      path = udev_list_entry_get_name(dev_list_entry);
+      dev = udev_device_new_from_syspath(udev, path);
+      dev_node = udev_device_get_devnode(dev);
+
+      if (!dev_node)
+        {
+          continue;
+        }
+      fd = open(dev_node, O_RDWR);
+      if (fd < 0)
+        continue;
+      printf("D: %s \n", dev_node);
+      ret = interogate_usb_desc(fd);
+      close(fd);
+      if (ret!=EINVAL) {
+        printf("Device is switched to %s\n", ret?"EDL":"SBL");
+        udev_enumerate_unref(enumerate);
+        udev_monitor_unref(mon);
+        udev_unref(udev);
+        return ret;
+      }
+    }
+
+  udev_enumerate_unref(enumerate);
+  udev_monitor_unref(mon);
+  udev_unref(udev);
+  return ret;
+
+}  
 
 int qdl_read(struct qdl_device *qdl, void *buf, size_t len, unsigned int timeout)
 {
@@ -243,7 +334,7 @@ int qdl_open(struct qdl_device *qdl)
     int intf = -1;
     int ret;
     int fd;
-
+    int returnMode = -1;
     udev = udev_new();
     if (!udev)
         err(1, "failed to initialize udev");
@@ -271,8 +362,8 @@ int qdl_open(struct qdl_device *qdl)
         if (fd < 0)
             continue;
         dbg_time("D: %s \n", dev_node);
-        ret = check_quec_usb_desc(fd, qdl, &intf);
-        if (!ret)
+        returnMode = check_quec_usb_desc(fd, qdl, &intf);
+        if ((returnMode == SWITCHED_TO_EDL) || (returnMode == SWITCHED_TO_SBL))
         {
             goto found;
         }
@@ -301,7 +392,8 @@ found:
     if (ret < 0)
         err(1, "failed to claim USB interface");
 
-    return 0;
+    printf("%s : interface claimed\n", __FUNCTION__);
+    return returnMode;
 }
 
 int sahara_rx_data(struct qdl_device *qdl, void *rx_buffer, size_t bytes_to_read)
@@ -337,6 +429,7 @@ int check_quec_usb_desc(int fd, struct qdl_device *qdl, int *intf)
     void *ptr;
     void *end;
     char desc[1024];
+    int returnStatus = EINVAL; 
 
     n = read(fd, desc, sizeof(desc));
     if (n < 0)
@@ -347,29 +440,28 @@ int check_quec_usb_desc(int fd, struct qdl_device *qdl, int *intf)
     end = ptr + n;
     dev = ptr;
 
-    /* Consider only devices with vid 0x2c7c */
-    if ((dev->idVendor != 0x2c7c) && (dev->idVendor != 0x05c6)) 
-    {
-        return -EINVAL;
+    /* Consider only devices with vid 0x2c7c(Quectel) or Qualcom */
+    if ((dev->idVendor != 0x2c7c) && (dev->idVendor != 0x05c6)) {
+        return EINVAL;
     }
-    else
-    {
-        if (dev->idProduct == 9008)
-        {
-            return SWITCHED_TO_EDL;
-        }
+
+    returnStatus = SWITCHED_TO_SBL;
+   
+    if (dev->idProduct == 0x9008) {
+      returnStatus =  SWITCHED_TO_EDL;
     }
+    
 
     dbg_time("D: idVendor=%04x idProduct=%04x\n",  dev->idVendor, dev->idProduct);
     ptr += dev->bLength;
 
     if (ptr >= end || dev->bDescriptorType != USB_DT_DEVICE)
-        return -EINVAL;
+        return EINVAL;
 
     cfg = ptr;
     ptr += cfg->bLength;
     if (ptr >= end || cfg->bDescriptorType != USB_DT_CONFIG)
-        return -EINVAL;
+        return EINVAL;
 
     unsigned numInterfaces = cfg->bNumInterfaces;
     dbg_time("C: bNumInterfaces: %d\n", numInterfaces);
@@ -377,13 +469,13 @@ int check_quec_usb_desc(int fd, struct qdl_device *qdl, int *intf)
     if (numInterfaces <= 0 || numInterfaces > MAX_NUM_INTERFACES)
     {
         syslog(0, "invalid no of interfaces: %d\n", numInterfaces);
-        return -EINVAL;
+        return EINVAL;
     }
     for (k = 0; k < numInterfaces; k++)
     {
         if (ptr >= end)
         {
-            return -EINVAL;
+            return EINVAL;
         }
 
         do
@@ -417,7 +509,7 @@ int check_quec_usb_desc(int fd, struct qdl_device *qdl, int *intf)
             if (ptr >= end)
             {
                 syslog(0, "%s %d end has been reached\n",__FILE__, __LINE__);
-                return -EINVAL;
+                return EINVAL;
             }
 
             do
@@ -480,15 +572,14 @@ int check_quec_usb_desc(int fd, struct qdl_device *qdl, int *intf)
         if( qdl->in_maxpktsize <= 0 || qdl->out_maxpktsize <= 0 )
         {
             syslog(0, "%s %d invalid max packet size received.\n",__FILE__, __LINE__);
-            return -ENOENT;
+            return ENOENT;
         }
         
         *intf = ifc->bInterfaceNumber;
 
-        return SWITCHED_TO_SBL;
+        return returnStatus;
     }
-
-    return -ENOENT;
+    return ENOENT;
 }
 
 
@@ -645,14 +736,16 @@ int sahara_flash_all(char *main_file_path, char *oem_file_path, char *carrier_fi
     bool done = false;
     ret = qdl_open(&qdl);
 
-    if (ret)
-    {
-        syslog(0, "Could not find a Quectel device ready to flash!\n");
-        return -1;
-    }
-    else
-    {
-        syslog(0, "%s: Found a Quectel device ready to flash!\n",__FUNCTION__);
+    switch(ret) {
+    case SWITCHED_TO_SBL:
+      syslog(0, "Found a Quectel device ready to flash!\n");
+      break;
+    case SWITCHED_TO_EDL:
+      syslog(0, "Found a Qualcom device ready to flash!\n");
+      break;
+    default:
+      syslog(0, "Could not find a Quectel or Qualcom device ready to flash!\n");
+      return -1;
     }
 
     count = 0;
@@ -681,6 +774,7 @@ int sahara_flash_all(char *main_file_path, char *oem_file_path, char *carrier_fi
         qdl_close(&qdl);
         return -1;
     }
+
 
     sahara_hello_multi(&qdl, pspkt);
 
