@@ -107,7 +107,6 @@ int qdl_flash_all(char * main_file_path,char*  oem_file_path,char* carrier_file_
 
     sprintf(full_programmer_path , "%s/%s", dirname(oem_file_path), "prog_nand_firehose_9x55.mbn" );
     printf("programmer path : %s\n", full_programmer_path);
-    //    file_handle = fopen("/home/ovidiu/Work/EM060-upgrade-test/BETA-21-09-2023/EM060KGL_chromefw_0920/EM060KGLAAR01A11M2G_01.002.01.002.01.002/prog_nand_firehose_9x55.mbn", "rb");
     file_handle = fopen(full_programmer_path, "rb");
     if (file_handle == NULL) {
       printf("%s %d %s errno: %d (%s)", __func__, __LINE__, full_programmer_path, errno, strerror(errno));
