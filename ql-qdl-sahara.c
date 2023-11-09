@@ -139,9 +139,10 @@ int qdl_flash_all(char * main_file_path,char*  oem_file_path,char* carrier_file_
     memset(buffer, 0 , QBUFFER_SIZE );
     nBytes = sahara_rx_data(&qdl, buffer, 0);
     pspkt = (struct sahara_pkt *)buffer;
-    if (nBytes == 0) {
-      printf("no bytes were red \n");
-      break;
+    if (nBytes <= 0) {
+      printf("no bytes were read. I'll poke the bear with one byte. \n");
+      syslog(0, "no bytes were read. I'll poke the bear with one byte. \n");
+      qdl_write(&qdl,&nBytes,1);
     }
 
     switch(le_uint32(pspkt->cmd)) {
