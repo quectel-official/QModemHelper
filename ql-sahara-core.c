@@ -269,8 +269,8 @@ int qdl_read(struct qdl_device *qdl, void *buf, size_t len, unsigned int timeout
     bulk.len = len;
     bulk.data = buf;
     bulk.timeout = timeout;
-    if ( ret=ioctl(qdl->fd, USBDEVFS_BULK, &bulk) <= 0) {
-      fprintf(stderr, "ERROR: n = %d, errno = %d (%s)\n", n, errno, strerror(errno));
+    if ( (ret=ioctl(qdl->fd, USBDEVFS_BULK, &bulk)) <= 0) {
+      fprintf(stderr, "ERROR: bytes red = %d, errno = %d (%s)\n", ret, errno, strerror(errno));
     }
     return ret;
 }
