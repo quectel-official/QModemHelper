@@ -246,7 +246,6 @@ int qdl_mode_check()
       ret = interogate_usb_desc(fd);
       close(fd);
       if (ret!=EINVAL) {
-        printf("Device is switched to %s\n", ret?"EDL":"SBL");
         udev_enumerate_unref(enumerate);
         udev_monitor_unref(mon);
         udev_unref(udev);
