@@ -246,16 +246,17 @@ int main(int argc, char *argv[])
         {"help", 0, NULL, 'H'},
         {},
     };
-	uint reset_line = 0;
+    uint reset_line = 0;
     int opt;
     int ret;
-	int reset_flag = 0;
+    int reset_flag = 0;
 
     openlog ("qmodemhelper", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
 
-			for (int i=1; i<argc;i++) {
-			 syslog(0,"\t Argument %d : %s",i, argv[i]);
-			}
+    for (int i=1; i<argc;i++) {
+      syslog(0,"\t Argument %d : %s",i, argv[i]);
+    }
+    
     while ( -1 != (opt = getopt_long(argc, argv, "h:", longopts, NULL)))
     {
         switch (opt)

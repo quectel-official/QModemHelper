@@ -246,7 +246,6 @@ int qdl_mode_check()
       ret = interogate_usb_desc(fd);
       close(fd);
       if (ret!=EINVAL) {
-        printf("Device is switched to %s\n", ret?"EDL":"SBL");
         udev_enumerate_unref(enumerate);
         udev_monitor_unref(mon);
         udev_unref(udev);
@@ -263,12 +262,16 @@ int qdl_mode_check()
 
 int qdl_read(struct qdl_device *qdl, void *buf, size_t len, unsigned int timeout)
 {
+  int ret;
     struct usbdevfs_bulktransfer bulk = {};
     bulk.ep = qdl->in_ep;
     bulk.len = len;
     bulk.data = buf;
     bulk.timeout = timeout;
-    return ioctl(qdl->fd, USBDEVFS_BULK, &bulk);
+    if ( (ret=ioctl(qdl->fd, USBDEVFS_BULK, &bulk)) <= 0) {
+      fprintf(stderr, "ERROR: bytes red = %d, errno = %d (%s)\n", ret, errno, strerror(errno));
+    }
+    return ret;
 }
 
 int qdl_write(struct qdl_device *qdl, const void *buf, size_t len)
