@@ -282,7 +282,7 @@ int main(int argc, char *argv[])
 							  reset_flag = 1;
                 break;
             case 'M':
-				if (flash_mode_check()) {
+				if (flash_mode_check() != NORMAL_OPERATION) {
 					printf("true\n");
 				} else {
 					printf("false\n");
