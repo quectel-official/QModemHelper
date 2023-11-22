@@ -74,9 +74,9 @@ int flash_mode_check(void)
         idVendor = file_get_value(path, 16);
         
           
-        if (idVendor == 0x9008) {
-            closedir(pDir);
-            return SWITCHED_TO_EDL;
+        if (idVendor == 0x05c6) {
+            find = SWITCHED_TO_EDL;
+            break;
         }
     
 
