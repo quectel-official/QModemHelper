@@ -15,6 +15,7 @@
 */
 
 #include "ql-mbim-core.h"
+#include "ql-sahara-core.h"
 
 #define VALIDATE_UNKNOWN(str) (str ? str : "unknown")
 
@@ -53,7 +54,7 @@ int flash_mode_check(void)
     struct dirent *ent = NULL;
     DIR *pDir;
     const char *rootdir = "/sys/bus/usb/devices";
-    int find = 0;
+    int find = NORMAL_OPERATION;
     int idVendor;
     int numInterfaces;
 
@@ -71,6 +72,14 @@ int flash_mode_check(void)
 
         snprintf(path, sizeof(path), "%s/%s/idVendor", rootdir, ent->d_name);
         idVendor = file_get_value(path, 16);
+        
+          
+        if (idVendor == 0x9008) {
+            closedir(pDir);
+            return SWITCHED_TO_EDL;
+        }
+    
+
         if (idVendor != 0x2c7c)
             continue;
 
@@ -100,7 +109,7 @@ int flash_mode_check(void)
             {
                 if (bNumEndpoints == 0)
                 {
-                    find = 1;
+                    find = SWITCHED_TO_SBL;
                 }
             }
         }
@@ -628,7 +637,7 @@ int mbim_prepare_to_flash(void)
     struct FwUpdaterData *ctx = &s_ctx;
     g_autoptr(GFile) file = NULL;
 
-    if (flash_mode_check())
+    if (flash_mode_check() != NORMAL_OPERATION)
     {
         info_printf("Already in download mode\n");
         return 0;
@@ -655,7 +664,7 @@ int mbim_prepare_to_flash(void)
     {
         usleep(500000); // 0.5S
 
-        if (flash_mode_check())
+        if (flash_mode_check() != NORMAL_OPERATION)
         {
             return 0;
         }
