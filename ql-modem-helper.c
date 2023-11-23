@@ -282,12 +282,12 @@ int main(int argc, char *argv[])
 							  reset_flag = 1;
                 break;
             case 'M':
-				if (flash_mode_check()) {
-					printf("true\n");
-				} else {
-					printf("false\n");
-				}
-                return 0;
+              if (flash_mode_check() != NORMAL_OPERATION) {
+                printf("true\n");
+              } else {
+                printf("false\n");
+              }
+              return 0;
 			case 'N':
 				reset_line = atoi(optarg);
 				printf("Baseline offset %d\n", reset_line);
