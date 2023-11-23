@@ -256,7 +256,8 @@ int main(int argc, char *argv[])
     for (int i=1; i<argc;i++) {
       syslog(0,"\t Argument %d : %s",i, argv[i]);
     }
-    
+
+
     while ( -1 != (opt = getopt_long(argc, argv, "h:", longopts, NULL)))
     {
         switch (opt)
