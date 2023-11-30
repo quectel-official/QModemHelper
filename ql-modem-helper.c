@@ -221,7 +221,8 @@ int flash_firmware(char *arg)
             return EXIT_FAILURE;
         }
     }
-
+    
+    sleep(3); // modem is rebooting
 	if (mbim_prepare_to_flash()) {
         return EXIT_FAILURE;
 	}
