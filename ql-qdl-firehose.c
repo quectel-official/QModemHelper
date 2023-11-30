@@ -439,7 +439,7 @@ static int fh_send_cmd(struct fh_data *fh_data, const struct fh_cmd *fh_cmd)
         snprintf(xml_buf + strlen(xml_buf), xml_size, "<setbootablestoragedrive value=\"%d\" />",
             !strcmp(q_device_type, "ufs") ? 1 : 0);
     } else if (!strcmp(fh_cmd->cmd.type, "reset")) {
-        snprintf(xml_buf + strlen(xml_buf), xml_size, "<power DelayInSeconds=\"%u\" value=\"reset\" />", 10);
+        snprintf(xml_buf + strlen(xml_buf), xml_size, "<power DelayInSeconds=\"%u\" value=\"reset\" />", 1);
     } else {
         printf("%s unkonw fh_cmd->cmd.type=%s\n", __func__, fh_cmd->cmd.type);
         return -1;

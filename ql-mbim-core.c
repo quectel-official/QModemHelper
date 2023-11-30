@@ -61,8 +61,8 @@ int flash_mode_check(void)
     pDir = opendir(rootdir);
     if (!pDir)
     {
-        info_printf("not open [/sys/bus/usb/devices] dir");
-        return 0;
+        info_printf("could not open [/sys/bus/usb/devices] dir");
+        return -1;
     }
 
     while ((ent = readdir(pDir)) != NULL)
@@ -630,12 +630,22 @@ int mbim_reboot_modem(void)
 int mbim_prepare_to_flash(void)
 {
     int i;
-
+    int flash_mode;
     struct FwUpdaterData *ctx = &s_ctx;
     g_autoptr(GFile) file = NULL;
 
-    if (flash_mode_check() != NORMAL_OPERATION)
-    {
+    i = MAX_MODE_CHECKS;
+
+    while (i--) {
+        flash_mode = flash_mode_check();
+        if (flash_mode == NORMAL_OPERATION) {
+            break;
+        }
+        if (flash_mode == -1 ) {
+            usleep(500000);
+            continue; 
+        }
+        
         info_printf("Already in download mode\n");
         return 0;
     }
@@ -657,8 +667,9 @@ int mbim_prepare_to_flash(void)
     g_main_loop_run(ctx->mainloop);
     g_main_loop_unref(ctx->mainloop);
 
-    for (i = 0; i < 10; i++) // wait 5s
-    {
+    i = MAX_MODE_CHECKS;
+    //for (i = 0; i < 10; i++) // wait 5s
+    while (i--) {
         usleep(500000); // 0.5S
 
         if (flash_mode_check() != NORMAL_OPERATION)
