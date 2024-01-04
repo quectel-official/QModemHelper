@@ -24,15 +24,35 @@
 #include <unistd.h>
 #include <syslog.h>
 #include <errno.h>
+#include <sys/stat.h>
+#include <limits.h>
+#include <libgen.h>
 
-const char kGpioSysFsPath[]  = "/sys/class/gpio";                                                                                                                                                                                    
-const char kGpioExportPath[] = "/sys/class/gpio/export";                                                                                                                                                                            
-const char kGpioPathPrefix[] = "/sys/class/gpio/gpio";  
+const char kGpioSysFsPath[]  = "/sys/class/gpio";
+const char kGpioExportPath[] = "/sys/class/gpio/export";
+const char kGpioPathPrefix[] = "/sys/class/gpio/gpio";
 
-const useconds_t kUdevWait   = 500 ;                                                                                                                                                                       
-const useconds_t kToggleWait = 1000;                                                                                                                                                                        
-                                                                     
-int gpio_reboot_modem(int reset_line)
+const useconds_t kUdevWait   = 500 ;
+const useconds_t kToggleWait = 1000;
+
+
+static int check_gpio_device(char* gpio_chip_name, char* gpio_chip_path)
+{
+  char device_path[MAX_FILE_NAME_LEN];
+  char link_name[MAX_FILE_NAME_LEN];
+  memset(device_path, 0 , MAX_FILE_NAME_LEN);
+  memset(link_name, 0 , MAX_FILE_NAME_LEN);
+  strcat(device_path,gpio_chip_path);
+  strcat(device_path,"/device");
+  printf("[%s] checking : %s\n", __FUNCTION__, gpio_chip_name);
+  printf("[%s] against : %s\n", __FUNCTION__, device_path);
+  readlink(device_path, link_name, MAX_FILE_NAME_LEN );
+  printf("[%s] link is  : %s\n", __FUNCTION__, basename(link_name)) ;
+  return strcmp(gpio_chip_name, basename(link_name));
+}
+
+
+int gpio_reboot_modem(char* gpio_chip,int reset_line)
 {
     DIR *dp;
     FILE * base_fp;
@@ -50,6 +70,10 @@ int gpio_reboot_modem(int reset_line)
     int line_retries = 100;
     int max_retry = 5;
     int ret;
+    int chip_found = 0;
+
+    printf(" %s Reseting line: %d\n", __FUNCTION__, reset_line );
+    printf(" %s Reseting gpio chip: %s\n", __FUNCTION__, gpio_chip );
 
     if ((dp = opendir(kGpioSysFsPath)) == NULL) {
         syslog(0, "can't open %s", kGpioSysFsPath);
@@ -62,8 +86,18 @@ int gpio_reboot_modem(int reset_line)
         strcat(local_path,kGpioSysFsPath);
         strcat(local_path,"/");
         strcat(local_path,dirp->d_name);
+
         if (strstr(local_path , kGpioPathPrefix)) {
-            syslog(0, "Found a chip at : %s\n", local_path);
+            ret = check_gpio_device(gpio_chip, local_path);
+            if (ret != 0) {
+              syslog(0, "Found a chip at : %s but is not matching\n", local_path);
+              printf("Found a chip at : %s but is not matching\n", local_path);
+              continue;
+            } else {
+              syslog(0, "Found a chip at : %s\n", local_path);
+              printf("Found a chip at : %s\n", local_path);
+              chip_found = 1;
+            }
             strcat(local_path,"/base");
             base_fp = fopen (local_path, "r");
             if (!base_fp) {
@@ -81,6 +115,15 @@ int gpio_reboot_modem(int reset_line)
         }
     }
     closedir(dp);
+    if (!chip_found) {
+      printf("Can't find the gpio chip, bailing out... \n");
+      syslog(0, "Can't find the gpio chip bailing out... \n");
+      return EXIT_FAILURE;
+    } else {
+      printf("[%s] Chip base line : %d\n", __FUNCTION__, gpio_base_line );
+      reset_line = gpio_base_line + reset_line;
+      printf("[%s] Reset line will be : %d\n", __FUNCTION__,reset_line );
+    }
 
     //TODO::Must remove the above logic to find gpio base.
     snprintf (relative_gpio_line_path , MAX_FILE_NAME_LEN , "%d", reset_line );

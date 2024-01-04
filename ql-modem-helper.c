@@ -134,6 +134,25 @@ static int print_help(int argc)
     return 0;
 }
 
+static int parse_reboot_parameter(char* arg, char* gpio_chip)
+{
+
+  int reset_line = 0;
+  char *segment;
+
+  segment = strtok(arg, ",");
+  if (segment == NULL) {
+    return 0;
+  }
+  strcpy(gpio_chip, segment);
+  segment = strtok(NULL, ",");
+  if (segment == NULL) {
+    return 0;
+  }
+  reset_line = atoi(segment);
+  return reset_line;
+}
+
 static int parse_flash_fw_parameters(char *arg, char *main_fw, char *oem_fw, char *carrier_fw)
 {
     char *str, *segment, *saveptr, *saveptr2;
@@ -207,24 +226,23 @@ int flash_firmware(char *arg)
 	memset(carrier_file_path , 0 , MAX_FILE_NAME_LEN);
 	memset(main_file_path , 0 , MAX_FILE_NAME_LEN);
 
-    parse_flash_fw_parameters(arg,
-                                main_file_path,
-                                oem_file_path,
-                                carrier_file_path);
+  parse_flash_fw_parameters(arg,
+                            main_file_path,
+                            oem_file_path,
+                            carrier_file_path);
 
 
-    if (qdl_mode_check() ==  SWITCHED_TO_EDL) {
-        // Modem is in qdl mode. sahara_flash_all will handle it.
-        syslog(0, "The device is switched to EDL mode. \n");
-        ret = qdl_flash_all(strdup(main_file_path), strdup(oem_file_path), strdup(carrier_file_path));
-        if (ret) {
-            return EXIT_FAILURE;
-        }
+  if (qdl_mode_check() ==  SWITCHED_TO_EDL) {
+    // Modem is in qdl mode. sahara_flash_all will handle it.
+    syslog(0, "The device is switched to EDL mode. \n");
+    ret = qdl_flash_all(strdup(main_file_path), strdup(oem_file_path), strdup(carrier_file_path));
+    if (ret) {
+      return EXIT_FAILURE;
     }
-    
-    sleep(3); // modem is rebooting
+  }
+  sleep(3); // modem is rebooting
 	if (mbim_prepare_to_flash()) {
-        return EXIT_FAILURE;
+    return EXIT_FAILURE;
 	}
 	ret = sahara_flash_all(main_file_path, oem_file_path, carrier_file_path);
 	if (ret != 0)
@@ -249,6 +267,7 @@ int main(int argc, char *argv[])
     int opt;
     int ret;
     int reset_flag = 0;
+    char gpio_chip[MAX_FILE_NAME_LEN]; 
 
     openlog ("qmodemhelper", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
 
@@ -287,14 +306,13 @@ int main(int argc, char *argv[])
                 printf("false\n");
               }
               return 0;
-			case 'N':
-				reset_line = atoi(optarg);
-				printf("Baseline offset %d\n", reset_line);
-				break;
-            case 'H':
-                print_help(argc);
-                return 0;
-            case 'h':
+        case 'N':
+          reset_line = parse_reboot_parameter(optarg, gpio_chip);
+          break;
+        case 'H':
+          print_help(argc);
+          return 0;
+        case 'h':
                 print_help(argc);
                 return 0;
             default:
@@ -303,21 +321,23 @@ int main(int argc, char *argv[])
         }
 
 		if ((reset_flag) && (reset_line)) {
-			if (power_lock(kPowerOverrideLockDirectoryPath, kPowerOverrideLockFileName) !=0) {
+      //ret = power_lock(kPowerOverrideLockDirectoryPath, kPowerOverrideLockFileName);
+      ret = 0;
+			if (ret !=0) {
 				printf("Cannot aquire file lock\n");
 				return EXIT_FAILURE;
 			}
-			printf("Reseting line: %d\n", reset_line );
-			ret = gpio_reboot_modem(reset_line);
+			ret = gpio_reboot_modem(gpio_chip, reset_line);
 			if (ret) {
 				printf("Failed to reset line: %d\n", reset_line );
-			}
-			else {
+			} else {
 				printf("Modem is rebooting\n");
 			}
-			power_unlock(kPowerOverrideLockDirectoryPath, kPowerOverrideLockFileName);
+			//ret = power_unlock(kPowerOverrideLockDirectoryPath,
+      //                   kPowerOverrideLockFileName);
+      ret = 0;
 			return ret;
-			}
-        closelog();
-        return EXIT_FAILURE;
+    }
+    closelog();
+    return EXIT_FAILURE;
 }
