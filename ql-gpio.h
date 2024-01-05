@@ -17,5 +17,5 @@
 #ifndef QL_GPIO_H
 #define QL_GPIO_H
 #define MAX_FILE_NAME_LEN 1024
-int gpio_reboot_modem(int reset_line);
+int gpio_reboot_modem(char* gpio_chip,int reset_line);
 #endif
