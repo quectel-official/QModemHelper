@@ -55,6 +55,7 @@ const char kFlashModeCheck[] = "flash_mode_check";
 const char kReboot[] = "reboot";
 const char kClearAttachAPN[] = "clear_attach_apn";
 const char kFwVersion[] = "fw_version";
+const char kHeartbeatConfig[] = "get_heartbeat_config";
 
 // Keys used for the kFlashFirmware/kFwVersion/kGetFirmwareInfo switches
 const char kFwMain[] = "main";
@@ -64,6 +65,10 @@ const char kFwAp[] = "ap";
 const char kFwDev[] = "dev";
 const char kFwCarrierUuid[] = "carrier_uuid";
 const char kUnknownRevision[] = "unknown-revision";
+
+// Key used for heartbeat configuration;
+const char kHeartbeatMaxFailures[] = "max_failures";
+const char kHeartbeatInterval[] = "interval";
 
 static int print_help(int);
 static int parse_flash_fw_parameters(char *arg, char *main_fw, char *oem_fw, char *carrier_fw);
@@ -127,8 +132,9 @@ static int print_help(int argc)
     fprintf(stderr,"   --%s\n", kGetFirmwareInfo);
     fprintf(stderr,"   --%s\n", kPrepareToFlash);
     fprintf(stderr,"   --%s\n", kFlashFirmware);
-	fprintf(stderr,"   --%s\n", kResetGpioLine);
-	fprintf(stderr,"   --%s\n", kFlashModeCheck);
+	  fprintf(stderr,"   --%s\n", kResetGpioLine);
+	  fprintf(stderr,"   --%s\n", kFlashModeCheck);
+    fprintf(stderr,"   --%s\n", kHeartbeatConfig);
     fprintf(stderr,"   --%s\n", kReboot);
     fprintf(stderr,"   --help\n");
     return 0;
@@ -259,6 +265,7 @@ int main(int argc, char *argv[])
         {kFlashFirmware, 1, NULL, 'A'},
         {kFlashModeCheck, 0, NULL, 'M'},
 		    {kResetGpioLine, 2, NULL, 'N'},
+        {kHeartbeatConfig, 0, NULL, 'O'},
         {kReboot, 0, NULL, 'R'},
         {"help", 0, NULL, 'H'},
         {},
@@ -309,6 +316,10 @@ int main(int argc, char *argv[])
         case 'N':
           reset_line = parse_reboot_parameter(optarg, gpio_chip);
           break;
+        case 'O':
+          printf("%s:3\n", kHeartbeatMaxFailures);
+          printf("%s:20\n", kHeartbeatInterval);
+          return 0;
         case 'H':
           print_help(argc);
           return 0;
