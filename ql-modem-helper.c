@@ -69,6 +69,7 @@ const char kUnknownRevision[] = "unknown-revision";
 // Key used for heartbeat configuration;
 const char kHeartbeatMaxFailures[] = "max_failures";
 const char kHeartbeatInterval[] = "interval";
+const char kHeartbeatModemIdleInterval[] = "modem_idle_interval";
 
 static int print_help(int);
 static int parse_flash_fw_parameters(char *arg, char *main_fw, char *oem_fw, char *carrier_fw);
@@ -319,6 +320,7 @@ int main(int argc, char *argv[])
         case 'O':
           printf("%s:3\n", kHeartbeatMaxFailures);
           printf("%s:20\n", kHeartbeatInterval);
+          printf("%s:120\n", kHeartbeatModemIdleInterval);
           return 0;
         case 'H':
           print_help(argc);
