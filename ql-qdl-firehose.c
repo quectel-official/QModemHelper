@@ -17,6 +17,7 @@
 #include "ql-sahara-core.h"
 #include "ql-qdl-firehose.h"
 
+
 char *q_device_type = "nand";
 SparseImgParam SparseImgData;
 
