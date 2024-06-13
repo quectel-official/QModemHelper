@@ -30,6 +30,7 @@
 #include <syslog.h>
 
 #define MAX_MODE_CHECKS 10
+/*#define MAX_MODE_CHECKS 10*/
 
 enum action
 {
