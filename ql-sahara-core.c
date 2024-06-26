@@ -186,15 +186,14 @@ int interogate_usb_desc(int fd)
   dev = baseline;
 
   printf("Vendor 0x%x Product 0x%x\n", dev->idVendor, dev->idProduct);
-  /* Consider only devices with vid 0x2c7c (Quectel) or 0x05c6 (Qualcom) */
-  if ((dev->idVendor != 0x2c7c) && (dev->idVendor != 0x05c6)) {
+  /* Consider only devices with vid 0x2c7c (Quectel), 0x05c6 (Qualcom) or Netprisma */
+  if ((dev->idVendor != 0x2c7c) && (dev->idVendor != 0x05c6)  && (dev->idVendor != NP_VID ) ) {
     return EINVAL;
   }
  
   if (dev->idProduct == 0x9008) {
     return SWITCHED_TO_EDL;
   }
-
 
   return NORMAL_OPERATION;
 }
@@ -443,8 +442,8 @@ int check_quec_usb_desc(int fd, struct qdl_device *qdl, int *intf)
     end = ptr + n;
     dev = ptr;
 
-    /* Consider only devices with vid 0x2c7c(Quectel) or Qualcom */
-    if ((dev->idVendor != 0x2c7c) && (dev->idVendor != 0x05c6)) {
+    /* Consider only devices with vid 0x2c7c(Quectel), Qualcom or NetPrisma */
+    if ((dev->idVendor != 0x2c7c) && (dev->idVendor != 0x05c6)  && (dev->idVendor != NP_VID) ) {
         return EINVAL;
     }
 

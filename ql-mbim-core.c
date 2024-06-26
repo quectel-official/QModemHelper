@@ -77,7 +77,7 @@ int flash_mode_check(void)
           break;
         }
 
-        if (idVendor != 0x2c7c)
+        if (idVendor != 0x2c7c && idVendor!= MBIM_NP_VID )
             continue;
 
         snprintf(path, sizeof(path), "%s/%s/bNumInterfaces", rootdir, ent->d_name);
@@ -576,7 +576,7 @@ static int find_quectel_mbim_device(struct FwUpdaterData *ctx)
 
         snprintf(path, sizeof(path), "%s/%s/idVendor", rootdir, ent->d_name);
         ctx->idVendor = file_get_value(path, 16);
-        if (ctx->idVendor != 0x2c7c && ctx->idVendor != 0x05c6)
+        if (ctx->idVendor != 0x2c7c && ctx->idVendor != 0x05c6 && ctx->idVendor != MBIM_NP_VID )
             continue;
 
         snprintf(path, sizeof(path), "%s/%s/idProduct", rootdir, ent->d_name);
@@ -613,7 +613,7 @@ int mbim_reboot_modem(void)
     struct FwUpdaterData *ctx = &s_ctx;
     g_autoptr(GFile) file = NULL;
     if (!find_quectel_mbim_device(ctx)) {
-        info_printf("Could not find a Quectel modem available for commands!\n");
+        info_printf("Could not find a modem available for commands!\n");
         return EXIT_FAILURE;
     }
 
@@ -699,7 +699,7 @@ int mbim_get_version(char main_version[128],
         return -1;
     }
 
-    info_printf("Quectel mbim device found!\n");
+    info_printf("Mbim device found!\n");
 
     strcpy(carrier_uuid, "generic");
     main_version[0] = 0;
@@ -712,16 +712,17 @@ int mbim_get_version(char main_version[128],
 
     file = g_file_new_for_path(ctx->cdc_wdm);
 
-    info_printf(" %s %d Quectel mbim device initialization!\n",__FILE__,__LINE__);
+    info_printf(" %s %d mbim device initialization!\n",__FILE__,__LINE__);
     mbim_device_new(file, NULL, (GAsyncReadyCallback)mbim_device_new_ready, ctx);
 
     g_main_loop_run(ctx->mainloop);
     g_main_loop_unref(ctx->mainloop);
 
-    if (!g_strrstr(ctx->firmware_info, "EM060KGL"))
+
+    if ( (g_strrstr(ctx->firmware_info, "EM060KGL") == NULL ) && (g_strrstr(ctx->firmware_info, "LCUK54WWDBL0102") == NULL ) )
     {
 
-        info_printf("can not get EM060KGL product firmware info from module\n");
+        info_printf("can not get product firmware info from module\n");
         return -1;
     }
 

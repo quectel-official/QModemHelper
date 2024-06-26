@@ -233,23 +233,23 @@ int flash_firmware(char *arg)
 	memset(carrier_file_path , 0 , MAX_FILE_NAME_LEN);
 	memset(main_file_path , 0 , MAX_FILE_NAME_LEN);
 
-  parse_flash_fw_parameters(arg,
+	parse_flash_fw_parameters(arg,
                             main_file_path,
                             oem_file_path,
                             carrier_file_path);
 
 
-  if (qdl_mode_check() ==  SWITCHED_TO_EDL) {
-    // Modem is in qdl mode. sahara_flash_all will handle it.
-    syslog(0, "The device is switched to EDL mode. \n");
-    ret = qdl_flash_all(strdup(main_file_path), strdup(oem_file_path), strdup(carrier_file_path));
+	if (qdl_mode_check() == SWITCHED_TO_EDL) {
+	    // Modem is in qdl mode. sahara_flash_all will handle it.
+	    syslog(0, "The device is switched to EDL mode. \n");
+	    ret = qdl_flash_all(strdup(main_file_path), strdup(oem_file_path), strdup(carrier_file_path));
     if (ret) {
-      return EXIT_FAILURE;
-    }
-  }
-  sleep(3); // modem is rebooting
+	      return EXIT_FAILURE;
+	    }
+	  }
+	sleep(3); // modem is rebooting
 	if (mbim_prepare_to_flash()) {
-    return EXIT_FAILURE;
+	    return EXIT_FAILURE;
 	}
 	ret = sahara_flash_all(main_file_path, oem_file_path, carrier_file_path);
 	if (ret != 0)
