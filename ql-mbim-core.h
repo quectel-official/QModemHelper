@@ -30,6 +30,8 @@
 #include <syslog.h>
 
 #define MAX_MODE_CHECKS 10
+#define MBIM_NP_VID 0x3731
+
 
 enum action
 {
