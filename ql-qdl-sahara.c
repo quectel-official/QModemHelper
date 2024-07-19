@@ -105,7 +105,7 @@ int qdl_flash_all(char * main_file_path,char*  oem_file_path,char* carrier_file_
   if (oem_file_path) {
     printf("oem: %s\n", oem_file_path);
     dirname(oem_file_path);
-    sprintf(full_programmer_path , "%s/%s", dirname(oem_file_path), "prog_nand_firehose_9x55.mbn" );
+    sprintf(full_programmer_path , "%s/%s", oem_file_path, "prog_nand_firehose_9x55.mbn" );
     printf("programmer path : %s\n", full_programmer_path);
     file_handle = fopen(full_programmer_path, "rb");
     if (file_handle == NULL) {
